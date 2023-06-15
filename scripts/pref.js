@@ -109,7 +109,7 @@ pref.observe = function(prefs, callback) {
 
   // Watch for preference changes under the root and clean up when necessary
   Services.prefs.addObserver(root, observe, false);
-  unload(function() Services.prefs.removeObserver(root, observe));
+  unload(() => Services.prefs.removeObserver(root, observe));
 };
 
 // Initialize default preferences

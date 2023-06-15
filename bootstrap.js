@@ -174,7 +174,7 @@ function tellAboutOptionsWindow() {
 function changeUI(window) {
 
   let {gURLBar, gBrowser, document} = window;
-  function $(id) document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
   let async = makeWindowHelpers(window).async;
   if (gURLBar.parentNode.parentNode.id != "personal-titlebar")
     async(function () {
@@ -656,7 +656,7 @@ function changeUI(window) {
     }
     // compute the width of enhancedURLBar first
     partsWidth = 0;
-    Array.forEach(enhancedURLBar.childNodes, function(child) partsWidth += child.boxObject.width);
+    Array.forEach(enhancedURLBar.childNodes, child => partsWidth += child.boxObject.width);
 
     if (enhancedURLBar.hasAttribute("domainVisible"))
       partsWidth += 7;
@@ -1263,14 +1263,14 @@ function changeUI(window) {
               pref_longURLSettingChosen = true;
               pref("showLastPartInLongURL", false);
               pref_showLastPartInLongURL = false;
-              async(function() updateURL(true), 250);
+              async(() => updateURL(true), 250);
             }
             else if (decision == 1) {
               pref("longURLSettingChosen", true);
               pref_longURLSettingChosen = true;
               pref("showLastPartInLongURL", true);
               pref_showLastPartInLongURL = true;
-              async(function() updateURL(true), 250);
+              async(() => updateURL(true), 250);
             }
           }, 30000);
       }
@@ -2863,7 +2863,7 @@ function changeUI(window) {
     }
 
     function createHelperKeys() {
-      function $(id) window.document.getElementById(id);
+      const $ = (id) => window.document.getElementById(id);
       function removeKey() {
         let keyset = $(keysetID + "Helpers");
         keyset && keyset.parentNode.removeChild(keyset);
@@ -2940,7 +2940,7 @@ function changeUI(window) {
 
     handleURLBarEvents();
     createHelperKeys();
-    async(function() updateURL(), 250);
+    async(() => updateURL(), 250);
     let runOnce = false;
     listen(window, window, "DOMContentLoaded", function() {
       if (runOnce)
@@ -3092,7 +3092,7 @@ function changeUI(window) {
   */
   let pageProgress = 0;
   function setupProgressMeter() {
-    function $(id) document.getElementById(id);
+    const $ = (id) => document.getElementById(id);
 
     let progressListener = {
       onChangeTab: function(e) {
@@ -3164,7 +3164,7 @@ function changeUI(window) {
 }
 
 function addToolbarButton(window) {
-  function $(id) window.document.getElementById(id);
+  const $ = (id) => window.document.getElementById(id);
 
   function saveToolbarButtonInfo(event) {
     if ($(toolbarButtonID) && toolbarButton.parentNode) {
@@ -3218,7 +3218,7 @@ function addToolbarButton(window) {
 }
 
 function createHotKey(window) {
-  function $(id) window.document.getElementById(id);
+  const $ = (id) => window.document.getElementById(id);
   function removeKey() {
     let keyset = $(keysetID);
     keyset && keyset.parentNode.removeChild(keyset);
@@ -3250,7 +3250,7 @@ function disable(id) {
   });
 }
 
-function startup(data, reason) AddonManager.getAddonByID(data.id, function(addon) {
+function startup(data, reason) { AddonManager.getAddonByID(data.id, function(addon) {
   gAddon = addon;
   Cu.import("resource://services-sync/util.js");
   if (reason == 5 || reason == 7)
@@ -3266,7 +3266,7 @@ function startup(data, reason) AddonManager.getAddonByID(data.id, function(addon
       getService(Ci.nsIStyleSheetService);
     let fileURI = addon.getResourceURI("styles/" + style + ".css");
     sss.loadAndRegisterSheet(fileURI, sss.USER_SHEET);
-    unload(function() sss.unregisterSheet(fileURI, sss.USER_SHEET));
+    unload(() => sss.unregisterSheet(fileURI, sss.USER_SHEET));
   }
 
   // Load various javascript includes for helper functions
@@ -3301,7 +3301,7 @@ function startup(data, reason) AddonManager.getAddonByID(data.id, function(addon
             loadStyles(styleSheetList[Math.min(usedStyleIndex, styleSheetList.length - 1)]);
           }
           else
-            unload(function() sss.unregisterSheet(fileURI, sss.USER_SHEET));
+            unload(() => sss.unregisterSheet(fileURI, sss.USER_SHEET));
         }
       }
     }
@@ -3486,7 +3486,7 @@ function startup(data, reason) AddonManager.getAddonByID(data.id, function(addon
   });
   // add a toolbar button to open options
   watchWindows2(addToolbarButton);
-});
+})};
 
 function shutdown(data, reason) {
   if (Services.vc.compare(Services.appinfo.platformVersion, "10.0") < 0)
@@ -3497,11 +3497,11 @@ function shutdown(data, reason) {
   }
 }
 
-function install(data, reason) AddonManager.getAddonByID(data.id, function(addon) {
+function install(data, reason) { AddonManager.getAddonByID(data.id, function(addon) {
   if (reason == 5 || reason == 7)
     firstRunAfterInstall = true;
   else
     normalStartup = true;
-});
+})};
 
 function uninstall() {}

@@ -58,7 +58,7 @@ let optionsWindow = {
   },
 
   openFile: function OW_openFile() {
-    function $(id) document.getElementById(id);
+    const $ = (id) => document.getElementById(id);
     let fp = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
     fp.init(window, this.STR("openDialog.title"), Ci.nsIFilePicker.modeOpen);
     fp.defaultString = "";
@@ -71,7 +71,7 @@ let optionsWindow = {
   },
 
   onLoad: function OW_onLoad() {
-    function $(id) document.getElementById(id);
+    const $ = (id) => document.getElementById(id);
     $("userStyleSheetPathLabel").value = (pref("userStylePath").length > 0?
       pref("userStylePath"): optionsWindow.STR("nocustomstyle"));
     this.toggleStylesSettings(true);
@@ -164,8 +164,8 @@ let optionsWindow = {
   },
 
   toggleStylesSettings: function OW_toggleStylesSettings(check) {
-    function $(id) document.getElementById(id);
-    function $$(idList, attr, val) idList.forEach(function(id) $(id).setAttribute(attr, val));
+    const $ = (id) => document.getElementById(id);
+    const $$ = (idList, attr, val) => idList.forEach(id => $(id).setAttribute(attr, val));
     let styleSheetEnabled = $("useStyleSheetCheckBox").checked;
     $$(["resetStyleSheetButton",
         "userStyleSheetPathLabel",
@@ -178,8 +178,8 @@ let optionsWindow = {
   },
 
   toggleURLBarSettings: function OW_toggleURLBarSettings(check) {
-    function $(id) document.getElementById(id);
-    function $$(idList, attr, val) idList.forEach(function(id) $(id).setAttribute(attr, val));
+    const $ = (id) => document.getElementById(id);
+    const $$ = (idList, attr, val) => idList.forEach(id => $(id).setAttribute(attr, val));
     let urlBarEnabled = $("enhanceURLBarCheckBox").checked;
     $$(["removeGibberishCheckBox",
         "makeCapitalCheckBox",
@@ -193,8 +193,8 @@ let optionsWindow = {
   },
 
   toggleStatusSettings: function OW_toggleStatusSettings(check, leftoverSpaceIndicator) {
-    function $(id) document.getElementById(id);
-    function $$(idList, attr, val) idList.forEach(function(id) $(id).setAttribute(attr, val));
+    const $ = (id) => document.getElementById(id);
+    const $$ = (idList, attr, val) => idList.forEach(id => $(id).setAttribute(attr, val));
     let statusEnabled = $("showStatusInURLBarCheckBox").checked;
     if (!leftoverSpaceIndicator) {
       $$(["useLeftoverSpaceCheckBox",
@@ -208,8 +208,8 @@ let optionsWindow = {
   },
 
   toggleProgressSettings: function OW_toggleProgressSettings(arrowIndicator) {
-    function $(id) document.getElementById(id);
-    function $$(idList, attr, val) idList.forEach(function(id) $(id).setAttribute(attr, val));
+    const $ = (id) => document.getElementById(id);
+    const $$ = (idList, attr, val) => idList.forEach(id => $(id).setAttribute(attr, val));
     let progressEnabled = $("showProgressInURLBarCheckBox").checked;
     if (!arrowIndicator)
       $("showProgressAsArrowCheckBox").disabled = !progressEnabled;
@@ -224,7 +224,7 @@ let optionsWindow = {
   },
 
   changeColor: function OW_changeColor(index) {
-    function $(id) document.getElementById(id);
+    const $ = (id) => document.getElementById(id);
     if (index == null) {
       $("progressColor" + pref("progressBarColorIndex")).checked = true;
       $("progressBarColorPicker").collapsed = pref("progressBarColorIndex") != 3;
@@ -247,7 +247,7 @@ let optionsWindow = {
   },
 
   onColorChange: function OW_onColorChange() {
-    function $(id) document.getElementById(id);
+    const $ = (id) => document.getElementById(id);
     pref("progressBarColorIndex", 3)
     pref("progressBarCustomColor", $("progressBarColorPicker").color);
   },

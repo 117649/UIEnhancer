@@ -109,7 +109,7 @@ function unload(callback, container) {
   // Calling with no arguments runs all the unloader callbacks
   if (callback == null) {
     unloading = true;
-    unloaders.slice().forEach(function(unloader) unloader());
+    unloaders.slice().forEach(unloader => unloader());
     unloading = false;
     unloaders.length = 0;
     unloaders = newUnloaders;
@@ -167,7 +167,7 @@ function unload2(callback, container) {
 
   // Calling with no arguments runs all the unloader callbacks
   if (callback == null) {
-    unloaders.slice().forEach(function(unloader) unloader());
+    unloaders.slice().forEach(unloader => unloader());
     unloaders.length = 0;
     return;
   }
@@ -205,7 +205,7 @@ function unload2(callback, container) {
 
 function watchWindows(callback) {
   var unloaded = false;
-  unload(function() unloaded = true);
+  unload(() => unloaded = true);
 
   // Wrap the callback in a function that ignores failures
   function watcher(window) {
@@ -248,13 +248,13 @@ function watchWindows(callback) {
   Services.ww.registerNotification(windowWatcher);
 
   // Make sure to stop watching for windows if we're unloading
-  unload(function() Services.ww.unregisterNotification(windowWatcher));
+  unload(() => Services.ww.unregisterNotification(windowWatcher));
 }
 
 // This version of watchWindows is used by addToolbarButton
 function watchWindows2(callback) {
   var unloaded = false;
-  unload2(function() unloaded = true);
+  unload2(() => unloaded = true);
 
   // Wrap the callback in a function that ignores failures
   function watcher(window) {
@@ -297,7 +297,7 @@ function watchWindows2(callback) {
   Services.ww.registerNotification(windowWatcher);
 
   // Make sure to stop watching for windows if we're unloading
-  unload2(function() Services.ww.unregisterNotification(windowWatcher));
+  unload2(() => Services.ww.unregisterNotification(windowWatcher));
 }
 // Take a window and create various helper properties and functions
 function makeWindowHelpers(window) {
@@ -333,8 +333,8 @@ function makeWindowHelpers(window) {
   };
 }
 
-function max(n1, n2) n1>n2?n1:n2;
-function min(n1, n2) n1<n2?n1:n2;
+const max = (n1, n2) => n1 > n2 ? n1 : n2;
+const min = (n1, n2) => n1 < n2 ? n1 : n2;
 
 // Helper function to convert url's names to proper words.
 function makeCapital(word, len) {
@@ -352,7 +352,7 @@ function makeCapital(word, len) {
         return parts[0];
     }
     else {
-      parts = parts.map(function(part) makeCapital(part, parts.length));
+      parts = parts.map(part => makeCapital(part, parts.length));
       return parts.join(" ");
     }
   }
@@ -471,7 +471,7 @@ function removeRedundantText(baseString, redString) {
     else
       i++;
   }
-  return redString.filter(function(v) v.length > 0).join(" ");
+  return redString.filter(v => v.length > 0).join(" ");
 }
 
 
@@ -570,7 +570,7 @@ function showNotification(aText, aTitle, aButtons, aCallback, aTimeout) {
   let buttons = [], i = 0, choiceSelected = false;
   let timeoutChecker = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 
-  for each (let button in aButtons) {
+  for (let button of aButtons) {
     let index = JSON.parse(JSON.stringify(i++));
     buttons.push({
       label: button.label,
@@ -624,7 +624,7 @@ function showContentNotification(aText, aTitle, aButtons, aCallback, aTimeout) {
   let buttons = [], i = 0, choiceSelected = false;
   let timeoutChecker = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 
-  for each (let button in aButtons) {
+  for (let button of aButtons) {
     let index = JSON.parse(JSON.stringify(i++));
     buttons.push({
       label: button.label,
