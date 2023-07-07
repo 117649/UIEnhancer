@@ -128,7 +128,7 @@ let optionsWindow = {
       return;
     }
     window.document.getElementById("arrowPanelDesc").value = text;
-    panel.openPopup(anchor, "after_start", anchor.boxObject.width/2, 0);
+    panel.openPopup(anchor, "after_start", anchor.getBoundingClientRect().width/2, 0);
     window.setTimeout(function() {
       callback && callback();
     }, delay);

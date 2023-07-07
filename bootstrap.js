@@ -289,13 +289,13 @@ function changeUI(window) {
 
   function getMaxWidth() {
     let whiteListAddons = ["mafArchiveInfoUrlbarBox", "omnibar-in-urlbar"];
-    let urlBarWidth = gURLBar.boxObject.width || 1000;
+    let urlBarWidth = gURLBar.textbox.getBoundingClientRect().width || 1000;
     if (showStatusInURLBar && useLeftoverSpace && newStatusCon && newStatus
       && newStatusCon.style.maxWidth.replace("px","")*1 > 0.5*urlBarWidth) {
         newStatusCon.style.maxWidth = newStatus.style.maxWidth = 0.45*urlBarWidth + "px";
         return 0.5*urlBarWidth;
     }
-    let origBoxObject = origIdentity.boxObject;
+    let origBoxObject = origIdentity.getBoundingClientRect();
     if (udb) {
       while (whiteListAddons.indexOf(udb.nextSibling.id) >= 0)
         udb = udb.nextSibling;
@@ -307,13 +307,13 @@ function changeUI(window) {
         else
           return urlBarWidth - origBoxObject.width - 250 - (S4E_statusInURLBar? 100: 0);
       }
-      let maxWidth = Math.max(udb.nextSibling.boxObject.x, 0.3*gURLBar.boxObject.width)
+      let maxWidth = Math.max(udb.nextSibling.getBoundingClientRect().x, 0.3*gURLBar.textbox.getBoundingClientRect().width)
         - origBoxObject.x - origBoxObject.width;
       if (showStatusInURLBar && !S4E_statusInURLBar)
         maxWidth -= (useLeftoverSpace? 250: Math.max(statusWidth, 60));
       else
-        maxWidth -= (S4E_statusInURLBar? Math.max(udb.nextSibling.boxObject.x,
-          0.3*gURLBar.boxObject.width)*0.33: 60);
+        maxWidth -= (S4E_statusInURLBar? Math.max(udb.nextSibling.getBoundingClientRect().x,
+          0.3*gURLBar.textbox.getBoundingClientRect().width)*0.33: 60);
       MAXWIDTH = Math.max(Math.min(maxWidth, urlBarWidth - origBoxObject.width - 100), 0);
       return MAXWIDTH;
     }
@@ -656,7 +656,7 @@ function changeUI(window) {
     }
     // compute the width of enhancedURLBar first
     partsWidth = 0;
-    Array.forEach(enhancedURLBar.childNodes, child => partsWidth += child.boxObject.width);
+    Array.forEach(enhancedURLBar.childNodes, child => partsWidth += child.getBoundingClientRect().width);
 
     if (enhancedURLBar.hasAttribute("domainVisible"))
       partsWidth += 7;
@@ -699,7 +699,7 @@ function changeUI(window) {
       let tempPart = enhancedURLBar.firstChild;
         partsWidth = 0;
         while (tempPart != partPointer) {
-          partsWidth += tempPart.boxObject.width;
+          partsWidth += tempPart.getBoundingClientRect().width;
           tempPart = tempPart.nextSibling;
         }
       }
@@ -1196,7 +1196,7 @@ function changeUI(window) {
   });
   function createStack(createVal, partURL, partType, hiddenArrow) {
     if (urlBarHeight == null || urlBarHeight <= 0)
-      urlBarHeight = gURLBar.boxObject.height;
+      urlBarHeight = gURLBar.textbox.getBoundingClientRect().height;
 
     let createdStack = document.createElementNS(XUL, "hbox");
     createdStack.style.height = urlBarHeight + "px";
@@ -1388,13 +1388,13 @@ function changeUI(window) {
       }
       else
         highlightPart(partPointer, false, false);
-      partsWidth += partPointer.boxObject.width;
+      partsWidth += partPointer.getBoundingClientRect().width;
       partPointer = partPointer.nextSibling;
     }
     else {
       let addedStack = createStack(partVal, partURL, partType, false);
       enhancedURLBar.appendChild(addedStack);
-      partsWidth += addedStack.boxObject.width;
+      partsWidth += addedStack.getBoundingClientRect().width;
       addedStack = null;
     }
     // Clearing rest of the parts if lastPart
@@ -1413,7 +1413,7 @@ function changeUI(window) {
           tempPart = enhancedURLBar.firstChild;
           if (tempPart.getAttribute("isHiddenArrow") == "true")
             tempPart = tempPart.nextSibling;
-          partsWidth -= tempPart.boxObject.width;
+          partsWidth -= tempPart.getBoundingClientRect().width;
           hiddenStartingIndex++;
           enhancedURLBar.removeChild(tempPart);
           tempPart = null;
@@ -1445,7 +1445,7 @@ function changeUI(window) {
           else {
             tStack = createStack(urlArray_updateURL[0],
               urlValue.slice(0, urlPartArray[0]), "domain", false);
-            partsWidth += tStack.boxObject.width;
+            partsWidth += tStack.getBoundingClientRect().width;
             enhancedURLBar.insertBefore(tStack, enhancedURLBar.firstChild);
             tStack = null;
           }
@@ -1455,7 +1455,7 @@ function changeUI(window) {
         && urlArray_updateURL[0].replace("www.", "") == identityLabel.value.toLowerCase()) {
           tStack = createStack(urlArray_updateURL[0], urlValue.slice(0,
             urlPartArray[0]), "domain", false);
-          partsWidth += tStack.boxObject.width;
+          partsWidth += tStack.getBoundingClientRect().width;
           hiddenStartingIndex = 0;
           enhancedURLBar.appendChild(tStack);
           tStack = null;
@@ -1464,7 +1464,7 @@ function changeUI(window) {
         && enhancedURLBar.firstChild.getAttribute("isHiddenArrow") != "true") {
           tStack = createStack(partVal, urlValue.slice
             (0, urlPartArray[hiddenStartingIndex - 1]), "null", true);
-          partsWidth += tStack.boxObject.width;
+          partsWidth += tStack.getBoundingClientRect().width;
           enhancedURLBar.insertBefore(tStack, enhancedURLBar.firstChild);
           tStack = null;
       }
@@ -1508,21 +1508,21 @@ function changeUI(window) {
     // else if statement to handle the condition when we scroll on a part
     // and the total url overflows
     else if (partsWidth > MAXWIDTH && mouseScrolled && !showingHidden) {
-      let pixelPerWord = scrolledStack.firstChild.boxObject.width/
+      let pixelPerWord = scrolledStack.firstChild.getBoundingClientRect().width/
         scrolledStack.firstChild.getAttribute("value").length;
       if (scrolledStack == enhancedURLBar.lastChild)
         scrolledStack.firstChild.setAttribute("value",
           trimWord(scrolledStack.firstChild.getAttribute("value"),
-          (MAXWIDTH - partsWidth + scrolledStack.firstChild.boxObject.width)/pixelPerWord));
+          (MAXWIDTH - partsWidth + scrolledStack.firstChild.getBoundingClientRect().width)/pixelPerWord));
       else {
         tempPart = enhancedURLBar.lastChild;
         while (partsWidth > MAXWIDTH && !tempPart && tempPart != scrolledStack) {
-          partsWidth -= tempPart.boxObject.width;
+          partsWidth -= tempPart.getBoundingClientRect().width;
           if (MAXWIDTH - partsWidth >= 30) {
             tempPart.firstChild.setAttribute("value", trimWord(
               tempPart.firstChild.getAttribute("value"), (MAXWIDTH
               - partsWidth)/pixelPerWord));
-            partsWidth += tempPart.boxObject.width;
+            partsWidth += tempPart.getBoundingClientRect().width;
             tempPart = tempPart.previousSibling;
           }
           else {
@@ -1538,14 +1538,14 @@ function changeUI(window) {
       && enhancedURLBar.firstChild.getAttribute("isHiddenArrow") != "true" && !showingHidden) {
         tStack = createStack(partVal, urlValue.slice
           (0, urlPartArray[hiddenStartingIndex - 1]), "null", true);
-        partsWidth += tStack.boxObject.width;
+        partsWidth += tStack.getBoundingClientRect().width;
         enhancedURLBar.insertBefore(tStack, enhancedURLBar.firstChild);
         tStack = null;
     }
     else if (lastPart && hiddenStartingIndex > 0 && !enhancedURLBar.firstChild && !showingHidden) {
       tStack = createStack(partVal, urlValue.slice
         (0, urlPartArray[hiddenStartingIndex - 1]), "null", true);
-      partsWidth += tStack.boxObject.width;
+      partsWidth += tStack.getBoundingClientRect().width;
       enhancedURLBar.appendChild(tStack);
       tStack = null;
     }
@@ -1561,18 +1561,18 @@ function changeUI(window) {
       }
       if (tempP == null || tempP.getAttribute("isDomain") == "true")
         return;
-      let width = tempP.firstChild.boxObject.width;
+      let width = tempP.firstChild.getBoundingClientRect().width;
       let chars = (MAXWIDTH - partsWidth + width - 20)/
         (width/tempP.firstChild.getAttribute("value").length);
       if (chars > tempP.firstChild.getAttribute("value").length) {
         tempP.firstChild.setAttribute("value", trimWord(lastUsefulPart, chars));
         // Updating the part to get real width and repeating for further accuracy
-        partsWidth += tempP.firstChild.boxObject.width - width;
-        width = tempP.firstChild.boxObject.width;
+        partsWidth += tempP.firstChild.getBoundingClientRect().width - width;
+        width = tempP.firstChild.getBoundingClientRect().width;
         tempP.firstChild.setAttribute("value", trimWord(lastUsefulPart,
           (MAXWIDTH - partsWidth + width - 20)/
           (width/tempP.firstChild.getAttribute("value").length)));
-        partsWidth += tempP.firstChild.boxObject.width - width;
+        partsWidth += tempP.firstChild.getBoundingClientRect().width - width;
       }
       lastUsefulPart = null;
     }
@@ -2034,7 +2034,7 @@ function changeUI(window) {
     tempS.setAttribute("maxrows", 5);
     tempS.style.display = "-moz-box";
     tempS.style.maxWidth = tempS.style.minWidth = Math.max((nextPart?
-      100: (editingPart.firstChild.boxObject.width +
+      100: (editingPart.firstChild.getBoundingClientRect().width +
       (editingPart == enhancedURLBar.firstChild? 75: 25))), 100) + "px";
     tempS.setAttribute("flex", 0);
 
@@ -2463,7 +2463,7 @@ function changeUI(window) {
     // Show the popup below the arrows
     if (siblingsShown)
       mainPopup.openPopup(arrowedStack.previousSibling.lastChild, "after_start",
-      -30 + arrowedStack.previousSibling.lastChild.boxObject.width, 0);
+      -30 + arrowedStack.previousSibling.lastChild.getBoundingClientRect().width, 0);
     else
       mainPopup.openPopup(arrowedStack.lastChild, "after_start", -15, 0);
     popupStack = arrowedStack;
@@ -2690,7 +2690,7 @@ function changeUI(window) {
       [urlVal_updateURL, isSetting_updateURL] = replaceGibberishText(urlVal_updateURL, urlArray_updateURL, index);
       if (index == 0 || (index == 0 && iLabel == urlVal_updateURL && urlArray_updateURL[1] != null))
         addPart((showPreURLParts? prePart + "///".slice(0, initial - prePart.length):"") + urlVal_updateURL,
-          urlValue.slice(0, urlPartArray[index]), $("identity-box").boxObject.width > 0,
+          urlValue.slice(0, urlPartArray[index]), $("identity-box").getBoundingClientRect().width > 0,
                          isSetting_updateURL, index == urlArray_updateURL.length - 1);
       else
         addPart(urlVal_updateURL, urlValue.slice(0, urlPartArray[index]), false,
@@ -2842,8 +2842,8 @@ function changeUI(window) {
           if (firstHidden)
             enhancedURLBar.firstChild.firstChild.style.display = "-moz-box";
           updateLook();
-          dt.setDragImage(enhancedURLBar, event.clientX - enhancedURLBar.boxObject.x
-            + (firstHidden?enhancedURLBar.firstChild.firstChild.boxObject.width: 0), 10);
+          dt.setDragImage(enhancedURLBar, event.clientX - enhancedURLBar.getBoundingClientRect().x
+            + (firstHidden?enhancedURLBar.firstChild.firstChild.getBoundingClientRect().width: 0), 10);
         }
         async(dragUpdate, 25);
       });
@@ -3070,9 +3070,9 @@ function changeUI(window) {
         origInput.setAttribute("flex", 0);
         newStatusCon.collapsed = false;
         async(function() {
-          if (gURLBar.boxObject.x + newStatusCon.boxObject.width
-            + enhancedURLBar.boxObject.width > Math.min(gURLBar.boxObject.x
-            + gURLBar.boxObject.width, window.screen.width))
+          if (gURLBar.textbox.getBoundingClientRect().x + newStatusCon.getBoundingClientRect().width
+            + enhancedURLBar.getBoundingClientRect().width > Math.min(gURLBar.textbox.getBoundingClientRect().x
+            + gURLBar.textbox.getBoundingClientRect().width, window.screen.width))
               newStatusCon.style.maxWidth = newStatus.style.maxWidth = (pref("useLeftoverSpace")? getMaxWidth()
                 + 200 - partsWidth: pref("statusWidth"))+ "px";
         }, 20);
@@ -3104,7 +3104,7 @@ function changeUI(window) {
         if (gBrowser.contentDocument === aBrowser.contentDocument) {
           let val = (curTotalProgress-1)/(maxTotalProgress-1);
           pageProgress = val;
-          let width = $("urlbar").boxObject.width;
+          let width = $("urlbar").getBoundingClientRect().width;
           if (pref("showProgressAsArrow")) {
             $("urlbar").style.backgroundSize = '40px 100%';
             $("urlbar").style.backgroundPosition = (val==1? 0: width*val - 25) + 'px 0px';
