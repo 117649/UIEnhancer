@@ -56,8 +56,8 @@
     <vbox flex="0">
       <checkbox id="enhanceURLBarCheckBox" preference="enhanceURLBar" oncommand="optionsWindow.toggleURLBarSettings();"
         tooltiptext="&enhanceURLBar.tooltip;" label="&enhanceURLBar.label;" accesskey="&enhanceURLBar.accesskey;" />
-      <groupbox orient="vertical">
-        <caption label="&generalCustomization.label;" />
+      <html:fieldset orient="vertical">
+        <html:legend>&generalCustomization.label;</html:legend>
         <checkbox id="removeGibberishCheckBox" preference="removeGibberish" oncommand="optionsWindow.notifyChange();"
           tooltiptext="&removeGibberish.tooltip;" label="&removeGibberish.label;" accesskey="&removeGibberish.accesskey;" />
         <checkbox id="makeCapitalCheckBox" preference="makeCapital" oncommand="optionsWindow.notifyChange();"
@@ -70,7 +70,7 @@
         <checkbox id="refreshOnLastPartClickCheckBox" preference="refreshOnLastPartClick"
           oncommand="optionsWindow.notifyChange();" tooltiptext="&refreshOnLastPartClick.tooltip;"
           label="&refreshOnLastPartClick.label;" accesskey="&refreshOnLastPartClick.accesskey;" />
-      </groupbox>
+      </html:fieldset>
       <checkbox id="useDragDropCheckBox" preference="useDragDrop" oncommand="optionsWindow.notifyChange();"
         tooltiptext="&useDragDrop.tooltip;" label="&useDragDrop.label;" accesskey="&useDragDrop.accesskey;" />
       <hbox id="shortcutContainer">
@@ -88,17 +88,17 @@
     </preferences>
     <checkbox id="useStyleSheetCheckBox" preference="useStyleSheet" oncommand="optionsWindow.toggleStylesSettings();"
       tooltiptext="&useStyleSheet.tooltip;" label="&useStyleSheet.label;" accesskey="&useStyleSheet.accesskey;" />
-    <groupbox id="customStyleSheet" orient="horizontal" align="center">
-      <caption label="&customStyleSheet.label;" tooltiptext="&customStyleSheet.tooltip;" />
+    <html:fieldset id="customStyleSheet" orient="horizontal" align="center">
+      <html:legend tooltiptext="&customStyleSheet.tooltip;">&customStyleSheet.label;</html:legend>
       <button id="browseStyleSheetButton" label="&browse.label;" oncommand="optionsWindow.openFile();"
         tooltiptext="&browse.tooltip;" accesskey="&browse.accesskey;" style="margin-right:5px;"/>
       <label id="userStyleSheetPathLabel" value="" crop="start" style="color:#444; max-width:200px;"/>
       <spacer flex="1" />
       <button id="resetStyleSheetButton" label="&resetStyleSheet.label;" oncommand="optionsWindow.resetStyleSheet();"
         tooltiptext="&resetStyleSheet.tooltip;" accesskey="&resetStyleSheet.accesskey;" style="margin-right:5px;"/>
-    </groupbox>
-    <groupbox>
-      <caption label="&selectStyleSheet.label;" tooltiptext="&selectStyleSheet.tooltip;" />
+    </html:fieldset>
+    <html:fieldset>
+      <html:legend tooltiptext="&selectStyleSheet.tooltip;">&selectStyleSheet.label;</html:legend>
       <hbox>
         <label id="usedStyleIndexListBoxLabel" control="usedStyleIndexListBox" style="padding:5px 4px;"
                tooltiptext="&chooseStyle.tooltip;" accesskey="&chooseStyle.accesskey;" >&chooseStyle.label; :
@@ -113,7 +113,7 @@
           </menupopup>
         </menulist>
       </hbox>
-    </groupbox>
+    </html:fieldset>
   </prefpane>
   <prefpane id="UIEnhancerProgressPrefPane" label="&progressPane.label;" image="progress.gif">
     <preferences>
@@ -124,16 +124,16 @@
       tooltiptext="&showProgressInURLBar.tooltip;" label="&showProgressInURLBar.label;" accesskey="&showProgressInURLBar.accesskey;" />
     <checkbox id="showProgressAsArrowCheckBox" preference="showProgressAsArrow" oncommand="optionsWindow.toggleProgressSettings(true);"
       tooltiptext="&showProgressAsArrow.tooltip;" label="&showProgressAsArrow.label;" accesskey="&showProgressAsArrow.accesskey;" />
-    <groupbox>
-      <caption label="&chooseColor.label;" tooltiptext="&chooseColor.tooltip;" />
+    <html:fieldset>
+      <html:legend tooltiptext="&chooseColor.tooltip;">&chooseColor.label;</html:legend>
       <hbox>
         <button id="progressColor0" type="checkbox" label="" image="blue.png" oncommand="optionsWindow.changeColor(0);"/>
         <button id="progressColor1" type="checkbox" label="" image="green.png" oncommand="optionsWindow.changeColor(1);"/>
         <button id="progressColor2" type="checkbox" label="" image="grey.png" oncommand="optionsWindow.changeColor(2);"/>
         <button id="progressColor3" type="checkbox" label="&custom.label;" oncommand="optionsWindow.changeColor(3);"/>
-        <colorpicker id="progressBarColorPicker" collapsed="true" onchange="optionsWindow.onColorChange();" type="button"/>
+        <html:input id="progressBarColorPicker" collapsed="true" onchange="optionsWindow.onColorChange();" type="color"></html:input>
       </hbox>
-    </groupbox>
+    </html:fieldset>
   </prefpane>
   <prefpane id="UIEnhancerStatusPrefPane" label="&statusPane.label;" image="status.png">
     <preferences>

@@ -229,7 +229,7 @@ let optionsWindow = {
       $("progressColor" + pref("progressBarColorIndex")).checked = true;
       $("progressBarColorPicker").collapsed = pref("progressBarColorIndex") != 3;
       if (pref("progressBarColorIndex") == 3)
-        $("progressBarColorPicker").color = pref("progressBarCustomColor");
+        $("progressBarColorPicker").value = pref("progressBarCustomColor");
       return;
     }
     for (let i = 0; i < 4; i++)
@@ -242,14 +242,14 @@ let optionsWindow = {
     else {
       pref("progressBarColorIndex", 3)
       $("progressBarColorPicker").collapsed = false;
-      pref("progressBarCustomColor", $("progressBarColorPicker").color);
+      pref("progressBarCustomColor", $("progressBarColorPicker").value);
     }
   },
 
   onColorChange: function OW_onColorChange() {
     const $ = (id) => document.getElementById(id);
     pref("progressBarColorIndex", 3)
-    pref("progressBarCustomColor", $("progressBarColorPicker").color);
+    pref("progressBarCustomColor", $("progressBarColorPicker").value);
   },
 
   notifyChange: function OW_notifyChange(val) {
