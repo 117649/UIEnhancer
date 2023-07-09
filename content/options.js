@@ -35,7 +35,7 @@ Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 
 function getURIForFile2(filepath, rootDir) {
-  let file = FileUtils.getFile("ProfD", rootDir?[rootDir]:["extensions"]);
+  let file = FileUtils.getDir("ProfD", rootDir?[rootDir]:["extensions"]);
   if (rootDir == null)
     file.append("UIEnhancer@girishsharma.xpi");
   return Services.io.newURI("jar:file:///" + file.path.replace(/[\\]/g, "/") + "!/" + filepath, null, null);
@@ -266,9 +266,9 @@ let optionsWindow = {
         optionsWindow.shortcutChanged = true;
       }
     }
-    let nb = document.getElementById("changeNotificationBox");
+    let nb = document.getElementById("changeNotificationBox")._notificationBox;
     nb.removeAllNotifications(true);
-    nb.appendNotification(optionsWindow.STR("notif.text"), optionsWindow.STR("notif.title"), null, nb.PRIORITY_INFO_HIGH, "", null);
+    nb.appendNotification(optionsWindow.STR("notif.title"), { label: optionsWindow.STR("notif.text"), priority: nb.PRIORITY_INFO_HIGH, });
   },
 
   onUnload: function OW_onUnload() {
