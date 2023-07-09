@@ -10,7 +10,7 @@
     <type>2</type>
     <homepageURL>https://addons.mozilla.org/en-US/firefox/addon/ui-enhancer/</homepageURL>
     <description>Implements feature rich Breadcrumb User Interface in the Location Bar</description>
-    <optionsURL>chrome://uienhancer/content/options.xul</optionsURL>
+    <optionsURL>chrome://uienhancer/content/options.xhtml</optionsURL>
     <optionsType>1</optionsType>
     <translator>fang5566 (zh-CN)</translator>
     <translator>velociraptor@BabelZilla (zh-TW)</translator>
@@ -22,71 +22,71 @@
     <translator>Alopepeo (es-ES)</translator>
 
     <localized>
-      <Description>
+      <r:Description>
         <locale>de</locale>
         <homepageURL>https://addons.mozilla.org/de/firefox/addon/ui-enhancer/</homepageURL>
         <description>Implements funktionsreichen Breadcrumb User Interface in der Location Bar</description>
         <name>Location Bar Enhancer</name>
         <translator>Axel Grude (RealRaven@BabelZilla)</translator>
-      </Description>
+      </r:Description>
     </localized>
 
     <localized>
-      <Description>
+      <r:Description>
         <locale>ru</locale>
         <homepageURL>https://addons.mozilla.org/ru/firefox/addon/ui-enhancer/</homepageURL>
         <description>Орудия имеют богатый Breadcrumb пользовательского интерфейса в адресной строке</description>
         <name>Location Bar Enhancer</name>
         <translator>Nero Wolfe (@BabelZilla), Kamui-Solo</translator>
-      </Description>
+      </r:Description>
     </localized>
 
     <localized>
-      <Description>
+      <r:Description>
         <locale>zh-CN</locale>
         <homepageURL>https://addons.mozilla.org/zh-CN/firefox/addon/ui-enhancer/</homepageURL>
         <description>功能多样的面包屑式地址栏</description>
         <name>Location Bar Enhancer</name>
         <translator>fang5566</translator>
-      </Description>
+      </r:Description>
     </localized>
 
     <localized>
-      <Description>
+      <r:Description>
         <locale>zh-TW</locale>
         <homepageURL>https://addons.mozilla.org/zh-TW/firefox/addon/ui-enhancer/</homepageURL>
         <description>使網址列顯示為功能強大的麵包屑界面</description>
         <name>Location Bar Enhancer</name>
         <translator>velociraptor@BabelZilla</translator>
-      </Description>
+      </r:Description>
     </localized>
 
     <localized>
-      <Description>
+      <r:Description>
         <locale>ja</locale>
         <homepageURL>https://addons.mozilla.org/ja/firefox/addon/ui-enhancer/</homepageURL>
         <description>Implements feature rich Breadcrumb User Interface in the Location Bar</description>
         <name>Location Bar Enhancer</name>
         <translator>haebaru (@BabelZilla)</translator>
-      </Description>
+      </r:Description>
     </localized>
 
     <localized>
-      <Description>
+      <r:Description>
         <locale>ro</locale>
         <description>Implementează o interfaţă cu marcaje de navigare îmbunătăţite în bara de adrese</description>
         <name>Location Bar Enhancer</name>
         <translator>Cătălin Zamfirescu (x10)</translator>
-      </Description>
+      </r:Description>
     </localized>
 
     <localized>
-      <Description>
+      <r:Description>
         <locale>es-ES</locale>
         <description>Implements feature rich Breadcrumb User Interface in the Location Bar</description>
         <name>Location Bar Enhancer</name>
         <translator>Alopepeo</translator>
-      </Description>
+      </r:Description>
     </localized>
 
     <contributor>Girish Sharma</contributor>
