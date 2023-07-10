@@ -495,7 +495,7 @@ function trimWord(trimVal, limit, start) {
     let newVal = "";
     if (valPart.length > 1) {
       let index = -1;
-      Array.some(valPart, function(v) {
+      valPart.some(function(v) {
         if (newVal.length > 2*limit/3)
           return true;
         else {

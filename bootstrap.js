@@ -656,7 +656,7 @@ function changeUI(window) {
     }
     // compute the width of enhancedURLBar first
     partsWidth = 0;
-    Array.forEach(enhancedURLBar.childNodes, child => partsWidth += child.getBoundingClientRect().width);
+    enhancedURLBar.childNodes.forEach(child => partsWidth += child.getBoundingClientRect().width);
 
     if (enhancedURLBar.hasAttribute("domainVisible"))
       partsWidth += 7;
@@ -783,7 +783,7 @@ function changeUI(window) {
           getAsyncRelatedArray(scrolledStack.previousSibling, function([detail, returnedArray]) {
             relatedScrolledArray = returnedArray;
             currentScrolledIndex = null;
-            Array.some(relatedScrolledArray, function(relatedPart, index) {
+            relatedScrolledArray.some(function(relatedPart, index) {
               if (enhancedURLBar.lastChild.getAttribute("url").replace(/^((?:https?|ftp):\/\/)/,"")
                 .replace(/[\/]$/, "") == relatedPart[1].replace(/[\/]$/, "")) {
                   currentScrolledIndex = index;
@@ -799,7 +799,7 @@ function changeUI(window) {
         }
         else if (scrolledStack.previousSibling != null) {
           currentScrolledIndex = null;
-          Array.some(relatedScrolledArray, function(relatedPart, index) {
+          relatedScrolledArray.some( function(relatedPart, index) {
             if (enhancedURLBar.lastChild.getAttribute("url").replace(/^((?:https?|ftp):\/\/)/,"")
               .replace(/[\/]$/, "") == relatedPart[1].replace(/[\/]$/, "")) {
                 currentScrolledIndex = index;
@@ -1854,7 +1854,7 @@ function changeUI(window) {
         // Correcting the value to match the global styling
         relatedVal = relatedVal.slice(1).replace(/[\-_+]/g, " ").replace("=", "= ")
           .split(/[&\/?#]+/g).filter(function(v) { return v.length > 0;});
-        Array.some(relatedVal, function(v, index) {
+        relatedVal.some( function(v, index) {
           if (gibberish(v) != false) {
             if (title != null && title.length > 0) {
               tempVal = trimWord(removeRedundantText(url.split(/[\/?&#]/)
@@ -1869,7 +1869,7 @@ function changeUI(window) {
         });
         relatedVal = makeCapital(relatedVal.join(" > ").replace(/^(\s<\s)/,""));
         matching = false;
-        Array.some(returnArray, function(tempP, index) {
+        returnArray.some( function(tempP, index) {
           if (tempP[0].toLowerCase() == relatedVal.toLowerCase()
             && (tempP[1].toLowerCase() == url.toLowerCase()
             || tempP[1].toLowerCase() == currentURL.toLowerCase())) {
@@ -2876,7 +2876,7 @@ function changeUI(window) {
                 return;
               relatedScrolledArray = returnedArray;
               currentScrolledIndex = null;
-              Array.some(relatedScrolledArray, function(relatedPart, index) {
+              relatedScrolledArray.some(function(relatedPart, index) {
                 if (enhancedURLBar.lastChild.getAttribute("url").replace(/^((?:https?|ftp):\/\/)/,"")
                   .replace(/[\/]$/, "") == relatedPart[1].replace(/[\/]$/, "")) {
                     currentScrolledIndex = index;
