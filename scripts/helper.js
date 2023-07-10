@@ -547,15 +547,16 @@ function trimWord(trimVal, limit, start) {
 function showNotification(aText, aTitle, aButtons, aCallback, aTimeout) {
   let window = Services.wm.getMostRecentWindow("navigator:browser");
   const XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-  let notificationBox = window.document.getElementById("USM-sync-notifications");
+  let notificationBox = window.document.getElementById("USM-sync-notifications")?._notificationBox;
   if (!notificationBox) {
-    notificationBox = window.document.createElementNS(XULNS, "notificationbox");
-    notificationBox.id = "USM-sync-notifications";
-    notificationBox.setAttribute("flex", "1");
-    notificationBox.setAttribute("style", "max-height: 0px;");
+    notificationBox = new MozElements.NotificationBox(element => {
+      element.id = "USM-sync-notifications";
+      element.setAttribute("flex", "1");
+      element.setAttribute("style", "max-height: 0px;");
 
-    let navigationBox = window.document.getElementById("navigator-toolbox");
-    navigationBox.parentNode.insertBefore(notificationBox, navigationBox.nextSibling);
+      let navigationBox = window.document.getElementById("navigator-toolbox");
+      navigationBox.parentNode.insertBefore(element, navigationBox.nextSibling);
+    })
     unload(function() {
       try {
         notificationBox.removeAllNotifications();
@@ -565,7 +566,7 @@ function showNotification(aText, aTitle, aButtons, aCallback, aTimeout) {
     }, window);
   }
   // Force a style flush to ensure that our binding is attached.
-  notificationBox.clientTop;
+  notificationBox.stack.clientTop;
 
   let buttons = [], i = 0, choiceSelected = false;
   let timeoutChecker = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -587,15 +588,18 @@ function showNotification(aText, aTitle, aButtons, aCallback, aTimeout) {
     });
   }
   notificationBox.removeAllNotifications();
-  notificationBox.appendNotification(aText, "", LOGO,
-                                     notificationBox.PRIORITY_INFO_MEDIUM,
-                                     buttons, null);
+  notificationBox.appendNotification("", 
+                                      {
+                                        label: aText, image: LOGO,
+                                        priority: notificationBox.PRIORITY_INFO_MEDIUM
+                                      },
+                                      buttons);
   let checkChoiceSelected = {
     notify: function () {
       if (!choiceSelected) {
         choiceSelected = true;
         notificationBox.removeAllNotifications();
-        notificationBox.blur();
+        notificationBox.stack.blur();
         aCallback(-1);
         try {
           timeoutChecker.cancel();
@@ -619,7 +623,7 @@ function showContentNotification(aText, aTitle, aButtons, aCallback, aTimeout) {
   let window = Services.wm.getMostRecentWindow("navigator:browser");
   let notificationBox = window.gBrowser.getNotificationBox()
   // Force a style flush to ensure that our binding is attached.
-  notificationBox.clientTop;
+  notificationBox.stack.clientTop;
 
   let buttons = [], i = 0, choiceSelected = false;
   let timeoutChecker = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
@@ -641,15 +645,18 @@ function showContentNotification(aText, aTitle, aButtons, aCallback, aTimeout) {
     });
   }
   notificationBox.removeAllNotifications();
-  notificationBox.appendNotification(aText, "", LOGO,
-                                     notificationBox.PRIORITY_INFO_MEDIUM,
-                                     buttons, null);
+  notificationBox.appendNotification("", 
+                                      {
+                                        label: aText, image: LOGO,
+                                        priority: notificationBox.PRIORITY_INFO_MEDIUM
+                                      },
+                                      buttons);
   let checkChoiceSelected = {
     notify: function () {
       if (!choiceSelected) {
         choiceSelected = true;
         notificationBox.removeAllNotifications();
-        notificationBox.blur();
+        notificationBox.stack.blur();
         aCallback(-1);
         try {
           timeoutChecker.cancel();
