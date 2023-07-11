@@ -1980,8 +1980,8 @@ function changeUI(window) {
     if ("init" in trans) {
       trans.init(null);
     }
-    trans.addDataFlavor("text/unicode");
-    trans.setTransferData("text/unicode", str, copyURL.length * 2);
+    trans.addDataFlavor("text/plain");
+    trans.setTransferData("text/plain", str, copyURL.length * 2);
     trans.addDataFlavor("text/html");
     trans.setTransferData("text/html", htmlstring, htmlstring.data.length * 2);
     // copy the transferable widget!
