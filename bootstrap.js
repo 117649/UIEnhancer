@@ -1637,21 +1637,21 @@ function changeUI(window) {
       mouseScrolled = false;
       if (partText == "about")
         partText += ":";
-      window.openUILinkIn(partText, tab, {relatedToCurrent:true});
+      gBrowser.ownerGlobal.openTrustedLinkIn(partText, tab, {relatedToCurrent:true});
     }
     else if (clickedStack != enhancedURLBar.lastChild || mouseScrolled || tab == "tab") {
       mouseScrolled = false;
       let url = clickedStack.getAttribute("url");
       if (url == "about")
         url += ":";
-      window.openUILinkIn(url, tab, {relatedToCurrent:true});
+      gBrowser.ownerGlobal.openTrustedLinkIn(url, tab, {relatedToCurrent:true});
     }
     else if (clickedStack == enhancedURLBar.lastChild && pref("refreshOnLastPartClick")) {
       mouseScrolled = false;
       let url = clickedStack.getAttribute("url");
       if (url == "about")
         url += ":";
-      window.openUILinkIn(url, tab, {relatedToCurrent:true});
+      gBrowser.ownerGlobal.openTrustedLinkIn(url, tab, {relatedToCurrent:true});
     }
     else if (clickedStack == enhancedURLBar.lastChild &&
              !pref("refreshOnLastPartClick") && !pref("dndReload")) {
@@ -1674,7 +1674,7 @@ function changeUI(window) {
             let url = clickedStack.getAttribute("url");
             if (url == "about")
               url += ":";
-            window.openUILinkIn(url, tab, {relatedToCurrent:true});
+            gBrowser.ownerGlobal.openTrustedLinkIn(url, tab, {relatedToCurrent:true});
           }
           else if (decision == 2) {
             pref("dndReload", true);
@@ -2145,7 +2145,7 @@ function changeUI(window) {
           try {
             enhancedURLBar.removeChild(e.target.parentNode);
           } catch (ex) {}
-          window.openUILinkIn(prevURL, "current");
+          gBrowser.ownerGlobal.openTrustedLinkIn(prevURL, "current");
           updateURL();
           break;
       }
@@ -2281,7 +2281,7 @@ function changeUI(window) {
           prevURL = "";
         prevURL += enhancedURLBar.lastChild.getAttribute("url")
           .slice(arrowedStack.getAttribute("url").length);
-        window.openUILinkIn(prevURL, "current");
+        gBrowser.ownerGlobal.openTrustedLinkIn(prevURL, "current");
         prevURL = null;
         arrowMouseDown = siblingsShown = false;
         highlightPart(arrowedStack, false, false);
@@ -2880,7 +2880,7 @@ function changeUI(window) {
               currentScrolledIndex+=aDelta;
               try {
                 let url = returnedArray[currentScrolledIndex][1];
-                window.openUILinkIn(url, "current");
+                gBrowser.ownerGlobal.openTrustedLinkIn(url, "current");
               } catch (ex) {}
             }, [delta]);
         }
@@ -2898,7 +2898,7 @@ function changeUI(window) {
         listen(window, upKey, "command", function() {
           if (enhancedURLBar.lastChild && enhancedURLBar.lastChild.previousSibling) {
             let url = enhancedURLBar.lastChild.previousSibling.getAttribute("url");
-            window.openUILinkIn(url, "current");
+            gBrowser.ownerGlobal.openTrustedLinkIn(url, "current");
           }
         });
         $("mainKeyset").parentNode.appendChild(UIEnhancerKeyset).appendChild(upKey);
