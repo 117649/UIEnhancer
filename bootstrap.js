@@ -42,6 +42,8 @@ let firstRunAfterInstall = false;
 let normalStartup = false;
 let reload = function() {};
 let openSite = false;
+
+let rcvMsg;
 // Array of progress colors
 let progressColorList = [
   "rgba(15,215,245, 0.6)", // Azure Blue
@@ -2159,8 +2161,11 @@ function changeUI(window) {
     createdStack = null;
   }
 
-  function getCurrentPageHREFs() {
-    let location = window.content.window.document.location;
+  async function getCurrentPageHREFs() {
+    let location = await new Promise(r => {
+      rcvMsg = r; 
+      gBrowser.selectedBrowser.messageManager.sendAsyncMessage("UIEnhancer", "location");
+    });
     if (HREFMap[location]) {
       let index = HREFMap[location][0];
       HREFMapList.splice(index, 1);
@@ -2168,24 +2173,11 @@ function changeUI(window) {
       HREFMap[location][0] = HREFMapList.length - 1;
       return HREFMap[location][1];
     }
-    let urls = window.content.window.document.getElementsByTagName("a");
-    let list = [];
-    let map = {};
-    for (let i = 0; i < Math.min(20, urls.length); i++) {
-      let u = urls[i];
-      let rawURL = u.getAttribute("href");
-      if (rawURL == null || rawURL == "#" || rawURL.search("javascript:") == 0)
-        continue;
-
-      let title = u.textContent.trim();
-      if (title.length < 2 || (map[title] && map[title] == 1))
-        continue;
-
-      map[title] = 1;
-      list.push([u.href, title]);
-    }
-    map = null;
-    urls = null;
+    let list = await new Promise(r => {
+      rcvMsg = r; 
+      gBrowser.selectedBrowser.messageManager.sendAsyncMessage("UIEnhancer", "urls");
+    });
+    
     let len = HREFMapList.length;
     if (len > 0) {
       if (len > 9) {
@@ -2300,7 +2292,7 @@ function changeUI(window) {
   }
 
   // All Async functions should have arguments in []
-  function handleArrowClick([arrowedStack, mouseDown, resultArray]) {
+  async function handleArrowClick([arrowedStack, mouseDown, resultArray]) {
     if (arrowMouseDown && popupStack == arrowedStack && mouseDown) {
       clearPopup();
       arrowMouseDown = false;
@@ -2365,7 +2357,7 @@ function changeUI(window) {
       mainPopup.appendChild(part);
     }
     if (arrowedStack == enhancedURLBar.lastChild) {
-      let pageLinks = getCurrentPageHREFs();
+      let pageLinks = await getCurrentPageHREFs();
       if (pageLinks.length > 0) {
         let part = document.createElementNS(XUL, "menuitem");
         part.setAttribute("id", "UIEnhancer_Page_Link_Info");
@@ -3433,6 +3425,57 @@ function startup(data, reason) { AddonManager.getAddonByID(data.id, function(add
           break;
         }
       }
+    });
+
+    watchWindows(function(window) {
+      let fs = 'data:application/javascript;charset=UTF-8,' + encodeURIComponent('(' + (function () {
+        let cl = msg => {
+          if (msg.data == "remove")
+            removeMessageListener("UIEnhancer", cl);
+          else {
+            switch (msg.data) {
+              case "location": {
+                sendSyncMessage("UIEnhancer:resp", { topic: msg.data, value: content.window.document.location });
+                break;
+              }
+              case "urls": {
+                let urls = content.window.document.getElementsByTagName("a");
+                let list = [];
+                let map = {};
+                for (let i = 0; i < Math.min(20, urls.length); i++) {
+                  let u = urls[i];
+                  let rawURL = u.getAttribute("href");
+                  if (rawURL == null || rawURL == "#" || rawURL.search("javascript:") == 0)
+                    continue;
+
+                  let title = u.textContent.trim();
+                  if (title.length < 2 || (map[title] && map[title] == 1))
+                    continue;
+
+                  map[title] = 1;
+                  list.push([u.href, title]);
+                }
+                map = null;
+                urls = null;
+                sendSyncMessage("UIEnhancer:resp", { topic: msg.data, value: list});
+                break;
+              }
+              default:
+                break;
+            }
+          }
+        };
+        addMessageListener("UIEnhancer", cl);
+      }).toString() + ')();');
+      window.getGroupMessageManager("browsers").loadFrameScript(fs, true);
+      let ml = msg => {
+        rcvMsg(msg.data.value);
+      };
+      window.getGroupMessageManager("browsers").addMessageListener("UIEnhancer:resp", ml);
+      unload(_ => {
+        window.getGroupMessageManager("browsers").removeDelayedFrameScript(fs, true);
+        window.getGroupMessageManager("browsers").removeMessageListener(ml, true);
+      });
     });
   }
 
