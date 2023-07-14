@@ -3256,16 +3256,14 @@ function startup(data, reason) { AddonManager.getAddonByID(data.id, function(add
   function loadStyles(style) {
     let sss = Cc["@mozilla.org/content/style-sheet-service;1"].
       getService(Ci.nsIStyleSheetService);
-    let fileURI = addon.getResourceURI("styles/" + style + ".css");
+    let fileURI = Services.io.newURI("chrome://uienhancer/skin/" + style + ".css", null, null);
     sss.loadAndRegisterSheet(fileURI, sss.USER_SHEET);
     unload(() => sss.unregisterSheet(fileURI, sss.USER_SHEET));
   }
 
   // Load various javascript includes for helper functions
-  ["helper", "pref"].forEach(function(fileName) {
-    let fileURI = addon.getResourceURI("scripts/" + fileName + ".js");
-    Services.scriptloader.loadSubScript(fileURI.spec, global);
-  });
+  Services.scriptloader.loadSubScript("chrome://uienhancer-scripts/content/helper.js", global);
+  Services.scriptloader.loadSubScript("chrome://uienhancer-scripts/content/pref.js", global);
   if (Services.vc.compare(Services.appinfo.platformVersion, "10.0") < 0)
     Components.manager.addBootstrappedManifestLocation(data.installPath);
 

@@ -1,4 +1,6 @@
 content uienhancer content/
+content uienhancer-scripts scripts/
+skin uienhancer classic/1.0 styles/
 locale  uienhancer en-US locale/en-US/
 locale  uienhancer ja    locale/ja/
 locale  uienhancer de    locale/de/
