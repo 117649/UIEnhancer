@@ -43,7 +43,7 @@ let normalStartup = false;
 let reload = function() {};
 let openSite = false;
 
-let rcvMsg;
+let rcvMsg = new Map();
 // Array of progress colors
 let progressColorList = [
   "rgba(15,215,245, 0.6)", // Azure Blue
@@ -2161,10 +2161,11 @@ function changeUI(window) {
     createdStack = null;
   }
 
-  async function getCurrentPageHREFs() {
-    let location = await new Promise(r => {
-      rcvMsg = r; 
-      gBrowser.selectedBrowser.messageManager.sendAsyncMessage("UIEnhancer", "location");
+  async function getCurrentPageHREFs() { // now need to use msg for content info thus async
+    let location = await new Promise((r,x) => {
+      let id = gBrowser.ownerGlobal.setTimeout(_ => { x(); rcvMsg.delete(id); }, 2000);
+      rcvMsg.set(id, r); 
+      gBrowser.selectedBrowser.messageManager.sendAsyncMessage("UIEnhancer", {topic: "location", id: id});
     });
     if (HREFMap[location]) {
       let index = HREFMap[location][0];
@@ -2173,9 +2174,10 @@ function changeUI(window) {
       HREFMap[location][0] = HREFMapList.length - 1;
       return HREFMap[location][1];
     }
-    let list = await new Promise(r => {
-      rcvMsg = r; 
-      gBrowser.selectedBrowser.messageManager.sendAsyncMessage("UIEnhancer", "urls");
+    let list = await new Promise((r,x) => {
+      let id = gBrowser.ownerGlobal.setTimeout(_ => { x(); rcvMsg.delete(id); }, 2000);
+      rcvMsg.set(id, r); 
+      gBrowser.selectedBrowser.messageManager.sendAsyncMessage("UIEnhancer", {topic: "urls", id: id});
     });
     
     let len = HREFMapList.length;
@@ -2291,8 +2293,10 @@ function changeUI(window) {
     return menuGroup;
   }
 
+  mainPopup.setAttribute("onpopupshowing", `event.target.childNodes.forEach(x => x.remove()); let c; while(c = event.target.anchorNode.stackPopup.firstChild){event.target.appendChild(c)};
+  delete event.target.anchorNode.stackPopup;`); // 'on' attr to pick up menuitems from the anchor node ensure no other items got mixed in.
   // All Async functions should have arguments in []
-  async function handleArrowClick([arrowedStack, mouseDown, resultArray]) {
+  function handleArrowClick([arrowedStack, mouseDown, resultArray]) {
     if (arrowMouseDown && popupStack == arrowedStack && mouseDown) {
       clearPopup();
       arrowMouseDown = false;
@@ -2301,87 +2305,116 @@ function changeUI(window) {
     }
     else if (arrowMouseDown && popupStack == arrowedStack)
       return;
-    clearPopup();
-    arrowMouseDown = true;
-    if (siblingsShown)
-      highlightPart(arrowedStack, true, true, '>');
-    else
-      highlightPart(arrowedStack, "partial", true, 'v');
-    if (arrowedStack.getAttribute("url") == "about") {
-      let last = resultArray.pop();
-      let total = getAboutUrls();
-      let found = false;
-      total.forEach(function([name,url]) {
-        if (name == last[0])
-          found = true;
-      });
-      if (!found)
-        total.push(last);
-      resultArray = total;
-    }
-    // Show the diff history results for that part
-    for (let i = 0; i < resultArray.length; i++) {
-      let arrowVal = resultArray[i][0];
-      let url = resultArray[i][1];
-      let part = document.createElementNS(XUL, "menuitem");
-      part.setAttribute("id", "UIEnhancer_Popup_Link_" + i);
-      part.setAttribute("class", "menuitem-iconic");
-      // Applying Bold style to current url
-      // Thus traversing to the last sibling of arrowedStack
-      part.style.fontWeight = "normal";
-      // If this part is auto generate, deemphasize it
-      // to indicate that is has not been visited yet
-      if (resultArray[i][2] && resultArray[i][2] == true) {
-        part.style.color = "rgb(75,75,75)";
-        part.setAttribute("tooltiptext", l10n("auto.tooltip"));
+
+    if (arrowedStack.isArwclking) return; // prevent multi events on 1 ele
+    handleArrowClick.prevRun.splice(0).forEach(x => x()); // kill all previous events handling only newest matter
+    new Promise(async (reslove, reject) => { // async to await msg for content info & Promise for to be terminate
+      handleArrowClick.prevRun.push(reject); // record this run for be killed
+      arrowedStack.isArwclking = true; // mark ele is been working on
+      clearPopup();
+      arrowMouseDown = true;
+      if (siblingsShown)
+        highlightPart(arrowedStack, true, true, '>');
+      else
+        highlightPart(arrowedStack, "partial", true, 'v');
+      if (arrowedStack.getAttribute("url") == "about") {
+        let last = resultArray.pop();
+        let total = getAboutUrls();
+        let found = false;
+        total.forEach(function ([name, url]) {
+          if (name == last[0])
+            found = true;
+        });
+        if (!found)
+          total.push(last);
+        resultArray = total;
       }
-      let isCurrent = false;
-      let tempS = enhancedURLBar.lastChild;
-      if (tempS && tempS.getAttribute("url").replace(/^((?:https?|ftp):\/\/)/,"")
-        .replace(/[\/]$/, "") == url.replace(/[\/]$/, "")) {
-          part.style.fontWeight = "bold";
-          isCurrent = true;
-      }
-      part.setAttribute("label", arrowVal);
-      listen(window, part, "click", function(e) {
-        if (e.button == 2)
-          return;
-        try {
-          mainPopup.hidePopup();
-        } catch(ex) {}
-        siblingsShown = arrowMouseDown = false;
-        highlightPart(arrowedStack, false, false, '>');
-        if (!isCurrent)
-          handleTextClick(url, null, null, e.ctrlKey || (e.button == 1));
-      }, false);
-      mainPopup.appendChild(part);
-    }
-    if (arrowedStack == enhancedURLBar.lastChild) {
-      let pageLinks = await getCurrentPageHREFs();
-      if (pageLinks.length > 0) {
+      let stackPopup = document.createElement('div'); // hold all the parts don't load them into mainPopup before open 
+      // Show the diff history results for that part
+      for (let i = 0; i < resultArray.length; i++) {
+        let arrowVal = resultArray[i][0];
+        let url = resultArray[i][1];
         let part = document.createElementNS(XUL, "menuitem");
-        part.setAttribute("id", "UIEnhancer_Page_Link_Info");
-        part.setAttribute("class", "menuitem-iconic");
-        part.setAttribute("label", l10n("href.label"));
-        part.setAttribute("disabled", true);
-        if (resultArray.length > 0)
-          mainPopup.appendChild(document.createElementNS(XUL, "menuseparator"));
-        mainPopup.appendChild(part);
-      }
-      for (let i = 0; i < Math.min(pageLinks.length, 28 - resultArray.length); i++) {
-        let arrowVal = pageLinks[i][1];
-        let url = pageLinks[i][0];
-        let part = document.createElementNS(XUL, "menuitem");
-        part.setAttribute("id", "UIEnhancer_Page_Link_" + i);
+        part.setAttribute("id", "UIEnhancer_Popup_Link_" + i);
         part.setAttribute("class", "menuitem-iconic");
         // Applying Bold style to current url
         // Thus traversing to the last sibling of arrowedStack
         part.style.fontWeight = "normal";
-        // since this part is href, style it differently
-        part.style.color = "rgb(10,75,200)";
-        part.setAttribute("tooltiptext", l10n("href.tooltip") + " " + url);
+        // If this part is auto generate, deemphasize it
+        // to indicate that is has not been visited yet
+        if (resultArray[i][2] && resultArray[i][2] == true) {
+          part.style.color = "rgb(75,75,75)";
+          part.setAttribute("tooltiptext", l10n("auto.tooltip"));
+        }
+        let isCurrent = false;
+        let tempS = enhancedURLBar.lastChild;
+        if (tempS && tempS.getAttribute("url").replace(/^((?:https?|ftp):\/\/)/, "")
+          .replace(/[\/]$/, "") == url.replace(/[\/]$/, "")) {
+          part.style.fontWeight = "bold";
+          isCurrent = true;
+        }
         part.setAttribute("label", arrowVal);
-        listen(window, part, "click", function(e) {
+        listen(window, part, "click", function (e) {
+          if (e.button == 2)
+            return;
+          try {
+            mainPopup.hidePopup();
+          } catch (ex) { }
+          siblingsShown = arrowMouseDown = false;
+          highlightPart(arrowedStack, false, false, '>');
+          if (!isCurrent)
+            handleTextClick(url, null, null, e.ctrlKey || (e.button == 1));
+        }, false);
+        stackPopup.appendChild(part);
+      }
+      if (arrowedStack == enhancedURLBar.lastChild) {
+        let pageLinks = await getCurrentPageHREFs();
+        if (pageLinks.length > 0) {
+          let part = document.createElementNS(XUL, "menuitem");
+          part.setAttribute("id", "UIEnhancer_Page_Link_Info");
+          part.setAttribute("class", "menuitem-iconic");
+          part.setAttribute("label", l10n("href.label"));
+          part.setAttribute("disabled", true);
+          if (resultArray.length > 0)
+          stackPopup.appendChild(document.createElementNS(XUL, "menuseparator"));
+          stackPopup.appendChild(part);
+        }
+        for (let i = 0; i < Math.min(pageLinks.length, 28 - resultArray.length); i++) {
+          let arrowVal = pageLinks[i][1];
+          let url = pageLinks[i][0];
+          let part = document.createElementNS(XUL, "menuitem");
+          part.setAttribute("id", "UIEnhancer_Page_Link_" + i);
+          part.setAttribute("class", "menuitem-iconic");
+          // Applying Bold style to current url
+          // Thus traversing to the last sibling of arrowedStack
+          part.style.fontWeight = "normal";
+          // since this part is href, style it differently
+          part.style.color = "rgb(10,75,200)";
+          part.setAttribute("tooltiptext", l10n("href.tooltip") + " " + url);
+          part.setAttribute("label", arrowVal);
+          listen(window, part, "click", function (e) {
+            if (e.button == 2)
+              return;
+            try {
+              mainPopup.hidePopup();
+            } catch (ex) { }
+            siblingsShown = arrowMouseDown = false;
+            highlightPart(arrowedStack, false, false, '>');
+            handleTextClick(url, null, null, e.ctrlKey || (e.button == 1));
+          }, false);
+          stackPopup.appendChild(part);
+        }
+      }
+      if (arrowedStack.getAttribute("isDomain") == "true") {
+        // Adding the base domain if domain in Identity Box
+        let part = document.createElementNS(XUL, "menuitem");
+        part.setAttribute("id", "UIEnhancer_Popup_Link_Domain");
+        part.setAttribute("class", "menuitem-iconic");
+        part.style.fontWeight = "normal";
+        // since this part is href, style it differently
+        let url = arrowedStack.getAttribute("url");
+        part.setAttribute("label", url);
+        listen(window, part, "click", function (e) {
           if (e.button == 2)
             return;
           try {
@@ -2391,84 +2424,68 @@ function changeUI(window) {
           highlightPart(arrowedStack, false, false, '>');
           handleTextClick(url, null, null, e.ctrlKey || (e.button == 1));
         }, false);
-        mainPopup.appendChild(part);
+        stackPopup.appendChild(part);
+        stackPopup.insertBefore(document.createElementNS(XUL, "menuseparator"),
+        stackPopup.lastChild);
       }
-    }
-    if (arrowedStack.getAttribute("isDomain") == "true") {
-      // Adding the base domain if domain in Identity Box
-      let part = document.createElementNS(XUL, "menuitem");
-      part.setAttribute("id", "UIEnhancer_Popup_Link_Domain");
-      part.setAttribute("class", "menuitem-iconic");
-      part.style.fontWeight = "normal";
-      // since this part is href, style it differently
-      let url = arrowedStack.getAttribute("url");
-      part.setAttribute("label", url);
-      listen(window, part, "click", function(e) {
-        if (e.button == 2)
-          return;
-        try {
-          mainPopup.hidePopup();
-        } catch(ex) {}
-        siblingsShown = arrowMouseDown = false;
-        highlightPart(arrowedStack, false, false, '>');
-        handleTextClick(url, null, null, e.ctrlKey || (e.button == 1));
-      }, false);
-      mainPopup.appendChild(part);
-      mainPopup.insertBefore(document.createElementNS(XUL, "menuseparator"),
-        mainPopup.lastChild);
-    }
 
-    // Adding text when showing siblingsShown or children
-    if (mainPopup.firstChild != null && resultArray.length > 0) {
-      let part = document.createElementNS(XUL, "menuitem");
-      part.setAttribute("id", "UIEnhancer_Popup_Info");
-      part.setAttribute("class", "menuitem-iconic");
-      if (siblingsShown)
-        part.setAttribute("label", l10n("sibling.label"));
-      else
-        part.setAttribute("label", l10n("children.label"));
-      part.setAttribute("disabled", true);
-      mainPopup.insertBefore(part, mainPopup.firstChild);
-    }
-    else if (mainPopup.firstChild == null) {
-      let part = document.createElementNS(XUL, "menuitem");
-      part.setAttribute("id", "UIEnhancer_No_Suggestion");
-      part.setAttribute("class", "menuitem-iconic");
-      part.setAttribute("label", l10n("noSuggestion.label"));
-      listen(window, part, "command", function() {
+      // Adding text when showing siblingsShown or children
+      if (stackPopup.firstChild != null && resultArray.length > 0) {
+        let part = document.createElementNS(XUL, "menuitem");
+        part.setAttribute("id", "UIEnhancer_Popup_Info");
+        part.setAttribute("class", "menuitem-iconic");
+        if (siblingsShown)
+          part.setAttribute("label", l10n("sibling.label"));
+        else
+          part.setAttribute("label", l10n("children.label"));
+        part.setAttribute("disabled", true);
+        stackPopup.insertBefore(part, stackPopup.firstChild);
+      }
+      else if (stackPopup.firstChild == null) {
+        let part = document.createElementNS(XUL, "menuitem");
+        part.setAttribute("id", "UIEnhancer_No_Suggestion");
+        part.setAttribute("class", "menuitem-iconic");
+        part.setAttribute("label", l10n("noSuggestion.label"));
+        listen(window, part, "command", function () {
+          try {
+            mainPopup.hidePopup();
+          } catch (ex) { }
+          arrowMouseDown = false;
+          highlightPart(arrowedStack, false, false, '>');
+        }, false);
+        stackPopup.appendChild(part);
+      }
+
+      // Insert the popupMenu before the first child of the mainPopup
+      if (arrowMouseDown) {
+        stackPopup.insertBefore(document.createElementNS(XUL, "menuseparator"),
+        stackPopup.firstChild);
+        stackPopup.insertBefore(getMenuItems(arrowedStack), stackPopup.firstChild);
+      }
+
+      // Show the popup below the arrows
+      if (siblingsShown){
+        arrowedStack.previousSibling.lastChild.stackPopup = stackPopup; // supply items to anchor for picking up
+        mainPopup.openPopup(arrowedStack.previousSibling.lastChild, "after_start",
+          -30 + arrowedStack.previousSibling.lastChild.getBoundingClientRect().width, 0);
+      } else {
+        arrowedStack.lastChild.stackPopup = stackPopup;
+        mainPopup.openPopup(arrowedStack.lastChild, "after_start", -15, 0);
+      }
+      popupStack = arrowedStack;
+      listen(window, mainPopup, "popuphidden", hideMainPopup = function () {
+        mainPopup.removeEventListener("popuphidden", hideMainPopup, false);
         try {
           mainPopup.hidePopup();
         } catch(ex) {}
         arrowMouseDown = false;
+        siblingsShown = false;
         highlightPart(arrowedStack, false, false, '>');
-      }, false);
-      mainPopup.appendChild(part);
-    }
-
-    // Insert the popupMenu before the first child of the mainPopup
-    if (arrowMouseDown) {
-      mainPopup.insertBefore(document.createElementNS(XUL, "menuseparator"),
-        mainPopup.firstChild);
-      mainPopup.insertBefore(getMenuItems(arrowedStack), mainPopup.firstChild);
-    }
-
-    // Show the popup below the arrows
-    if (siblingsShown)
-      mainPopup.openPopup(arrowedStack.previousSibling.lastChild, "after_start",
-      -30 + arrowedStack.previousSibling.lastChild.getBoundingClientRect().width, 0);
-    else
-      mainPopup.openPopup(arrowedStack.lastChild, "after_start", -15, 0);
-    popupStack = arrowedStack;
-    listen(window, mainPopup, "popuphidden", hideMainPopup = function() {
-      mainPopup.removeEventListener("popuphidden", hideMainPopup, false);
-      try {
-        mainPopup.hidePopup();
-      } catch(ex) {}
-      arrowMouseDown = false;
-      siblingsShown = false;
-      highlightPart(arrowedStack, false, false, '>');
-    });
+      });
+      reslove();
+    }).catch(e => console.log(e)).finally(_ => {delete arrowedStack.isArwclking}); // remove mark anyway
   }
+  handleArrowClick.prevRun = [];
 
   // Global functions used in updateURL
   let urlValue, urlPostSetting;
@@ -3425,15 +3442,16 @@ function startup(data, reason) { AddonManager.getAddonByID(data.id, function(add
       }
     });
 
+    // content script & msg listener for get content info
     watchWindows(function(window) {
       let fs = 'data:application/javascript;charset=UTF-8,' + encodeURIComponent('(' + (function () {
         let cl = msg => {
           if (msg.data == "remove")
             removeMessageListener("UIEnhancer", cl);
           else {
-            switch (msg.data) {
+            switch (msg.data.topic) {
               case "location": {
-                sendSyncMessage("UIEnhancer:resp", { topic: msg.data, value: content.window.document.location });
+                sendSyncMessage("UIEnhancer:resp", { value: content.window.document.location.href, id: msg.data.id });
                 break;
               }
               case "urls": {
@@ -3453,9 +3471,7 @@ function startup(data, reason) { AddonManager.getAddonByID(data.id, function(add
                   map[title] = 1;
                   list.push([u.href, title]);
                 }
-                map = null;
-                urls = null;
-                sendSyncMessage("UIEnhancer:resp", { topic: msg.data, value: list});
+                sendSyncMessage("UIEnhancer:resp", { value: list, id: msg.data.id });
                 break;
               }
               default:
@@ -3467,12 +3483,18 @@ function startup(data, reason) { AddonManager.getAddonByID(data.id, function(add
       }).toString() + ')();');
       window.getGroupMessageManager("browsers").loadFrameScript(fs, true);
       let ml = msg => {
-        rcvMsg(msg.data.value);
+        let resolver = rcvMsg.get(msg.data.id)
+        if (resolver) {
+          resolver(msg.data.value);
+          rcvMsg.delete(msg.data.id);
+          window.clearTimeout(msg.data.id);
+        }
       };
       window.getGroupMessageManager("browsers").addMessageListener("UIEnhancer:resp", ml);
       unload(_ => {
         window.getGroupMessageManager("browsers").removeDelayedFrameScript(fs, true);
-        window.getGroupMessageManager("browsers").removeMessageListener(ml, true);
+        window.getGroupMessageManager("browsers").removeMessageListener("UIEnhancer:resp",ml);
+        window.getGroupMessageManager("browsers").broadcastAsyncMessage('autoscroll', "remove");
       });
     });
   }
