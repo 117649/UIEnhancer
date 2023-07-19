@@ -2963,40 +2963,40 @@ function changeUI(window) {
   */
   let newStatus = null, newStatusCon = null;
   function setupStatusBar() {
-    let statusBar = $("statusbar-display");
+    let statusBar = window.StatusPanel;
     {
-      let origSetter = statusBar.__lookupSetter__("label");
-      statusBar.__defineSetter__("label", function (x) {
+      let origSetter = statusBar.__lookupSetter__("_label");
+      statusBar.__defineSetter__("_label", function (x) {
         origSetter.apply(this, [x]);
-        updateStatus(statusBar.getAttribute("label"), statusBar.getAttribute("inactive"));
+        updateStatus(x, statusBar.panel.getAttribute("inactive"));
       });
       unload(function() {
-        statusBar.__defineSetter__("label", origSetter);
+        statusBar.__defineSetter__("_label", origSetter);
       }, window);
     }
-    statusBar.collapsed = true;
+    statusBar.panel.collapsed = true;
     let isWindows = window.navigator.oscpu.toLowerCase().indexOf("window") >= 0;
     let isLinux = window.navigator.oscpu.toLowerCase().indexOf("linux") >= 0;
     let isMac = window.navigator.oscpu.toLowerCase().indexOf("mac") >= 0;
-    let height = window.getComputedStyle(gURLBar).height.replace("px", '')*1
-      + window.getComputedStyle(gURLBar).paddingTop.replace("px", '')*1
-      + window.getComputedStyle(gURLBar).paddingBottom.replace("px", '')*1
-      - window.getComputedStyle(gURLBar).borderBottomWidth.replace("px", '')*1
-      - window.getComputedStyle(gURLBar).borderTopWidth.replace("px", '')*1;
+    let height = window.getComputedStyle(gURLBar.textbox).height.replace("px", '')*1
+      + window.getComputedStyle(gURLBar.textbox).paddingTop.replace("px", '')*1
+      + window.getComputedStyle(gURLBar.textbox).paddingBottom.replace("px", '')*1
+      - window.getComputedStyle(gURLBar.textbox).borderBottomWidth.replace("px", '')*1
+      - window.getComputedStyle(gURLBar.textbox).borderTopWidth.replace("px", '')*1;
     if (isLinux)
       height += 2;
     newStatusCon = window.document.createElementNS(XUL, "hbox");
     newStatusCon.setAttribute("id", "UIEnhancer_StatusBar");
     newStatusCon.setAttribute("pack", "end");
-    newStatusCon.style.display = "-moz-box";
+    newStatusCon.style.display = null;
     let newStatusIcon = window.document.createElementNS(XUL, "label");
     if (isMac)
       newStatusIcon.setAttribute("style", "min-width:15px !important; max-width: 15px !important;"
-        + "opacity: 0.4; display:-moz-box; background-image: url('"
+        + "opacity: 0.4; background-image: url('"
         + STATUS + "'); background-size: 110% 100%; padding: 0px; margin:-3px 0px -2px 4px;");
     else
       newStatusIcon.setAttribute("style", "min-width:15px !important; max-width: 15px !important;"
-        + "opacity: 0.4; display:-moz-box; background-image: url('"
+        + "opacity: 0.4; background-image: url('"
         + STATUS + "'); background-size: 110% 100%; padding: 0px; margin: 0px;");
     newStatusIcon.setAttribute("flex", 0);
     newStatusCon.appendChild(newStatusIcon);
@@ -3006,31 +3006,31 @@ function changeUI(window) {
     if (isMac)
       newStatus.setAttribute("style", "min-width: 50px !important; background: -moz-linear-gradient"
         + "(left, rgba(240,240,240,0.4) 0%, rgba(250,250,250,0.25) 65%, rgba(255,255,255,0) 100%);"
-        + "height: " + height + "px; text-align: right; display:-moz-box; color: #555; padding:3px 0px 1px 4px;");
+        + "height: " + height + "px; text-align: right; color: #555; padding:3px 0px 1px 4px;");
     else
       newStatus.setAttribute("style", "min-width: 50px !important; background: -moz-linear-gradient"
         + "(left, rgba(240,240,240,0.4) 0%, rgba(250,250,250,0.25) 65%, rgba(255,255,255,0) 100%);"
-        + "height: " + height + "px; text-align: right; display:-moz-box; color: #555; padding:2px 0px 2px 4px;");
+        + "height: " + height + "px; text-align: right; color: #555; padding:2px 0px 2px 4px;");
     newStatusCon.appendChild(newStatus);
     newStatusCon.collapsed = true;
     if (isWindows) {
-      newStatus.style.margin = "-" + window.getComputedStyle(gURLBar).paddingTop + " 0px -"
-        + window.getComputedStyle(gURLBar).paddingBottom + " 0px";
-      newStatus.style.padding = (window.getComputedStyle(gURLBar).paddingTop.replace("px", "")*1 + 3)
+      newStatus.style.margin = "-" + window.getComputedStyle(gURLBar.textbox).paddingTop + " 0px -"
+        + window.getComputedStyle(gURLBar.textbox).paddingBottom + " 0px";
+      newStatus.style.padding = (window.getComputedStyle(gURLBar.textbox).paddingTop.replace("px", "")*1 + 3)
         + "px 0px 1px 0px";
     }
     else if (isLinux) {
       newStatus.style.margin = "-"
-        + (window.getComputedStyle(gURLBar).paddingTop.replace("px", '')*1 + 1)
+        + (window.getComputedStyle(gURLBar.textbox).paddingTop.replace("px", '')*1 + 1)
         + "px 0px -"
-        + (window.getComputedStyle(gURLBar).paddingBottom.replace("px", '')*1 + 1)
+        + (window.getComputedStyle(gURLBar.textbox).paddingBottom.replace("px", '')*1 + 1)
         + "px 0px";
     }
     else if (isMac) {
       newStatus.style.margin = "-"
-        + (window.getComputedStyle(gURLBar).paddingTop.replace("px", '')*1 + 3)
+        + (window.getComputedStyle(gURLBar.textbox).paddingTop.replace("px", '')*1 + 3)
         + "px 0px -"
-        + (window.getComputedStyle(gURLBar).paddingBottom.replace("px", '')*1 + 2)
+        + (window.getComputedStyle(gURLBar.textbox).paddingBottom.replace("px", '')*1 + 2)
         + "px 0px";
     }
     origInput.parentNode.insertBefore(newStatusCon, origInput.nextSibling);
@@ -3060,21 +3060,15 @@ function changeUI(window) {
           pref("statusWidth"))/value.length < 8)
             newStatus.setAttribute("flex", 1);
         newStatusCon.style.maxWidth = newStatus.style.maxWidth = (pref("useLeftoverSpace")? MAXWIDTH
-          + 225 - partsWidth: pref("statusWidth"))+ "px";
+          : pref("statusWidth"))+ "px";
+        newStatusCon.style.marginLeft = '-' + newStatusCon.style.maxWidth;
         newStatus.value = value;
         origInput.setAttribute("flex", 0);
         newStatusCon.collapsed = false;
-        async(function() {
-          if (gURLBar.textbox.getBoundingClientRect().x + newStatusCon.getBoundingClientRect().width
-            + enhancedURLBar.getBoundingClientRect().width > Math.min(gURLBar.textbox.getBoundingClientRect().x
-            + gURLBar.textbox.getBoundingClientRect().width, window.screen.width))
-              newStatusCon.style.maxWidth = newStatus.style.maxWidth = (pref("useLeftoverSpace")? getMaxWidth()
-                + 200 - partsWidth: pref("statusWidth"))+ "px";
-        }, 20);
       }
     }
     unload(function() {
-      statusBar.collapsed = false;
+      statusBar.panel.collapsed = false;
       newStatusCon.parentNode.removeChild(newStatusCon);
       newStatusIcon = newStatusCon = newStatus = null;
     }, window);
