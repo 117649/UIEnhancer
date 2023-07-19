@@ -268,7 +268,7 @@ function changeUI(window) {
   let setupEnhancedURLBarUI = function() {};
   let setOpacity = function() {};
 
-  let {DBConnection} = PlacesUtils.history.QueryInterface(Ci.nsPIPlacesDatabase);
+  let {DBConnection} =  PlacesUtils.history;
 
   unload(function() {
     popupStack = settingsStartIndex = relatedScrolledArray
