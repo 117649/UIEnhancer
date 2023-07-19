@@ -1993,14 +1993,14 @@ function changeUI(window) {
           identityLabel.collapsed = true;
         } catch (ex) {}
       editingPart.setAttribute("isDomain", "false");
-      editingPart.firstChild.style.display = "-moz-box";
+      editingPart.firstChild.style.display = null;
     }
     highlightPart(editingPart, false, false, '>');
 
     let createdStack = document.createElementNS(XUL, "stack");
     createdStack.setAttribute("id", "UIEnhancer_URLBar_Editing_Stack");
     createdStack.style.height = urlBarHeight + "px";
-    createdStack.style.display = "-moz-box";
+    createdStack.style.display = "flex";
     createdStack.setAttribute("flex", 0);
     createdStack.setAttribute("url", editingPart.getAttribute("url"));
     if (!nextPart) {
@@ -2009,31 +2009,32 @@ function changeUI(window) {
     }
 
     // Adding the Text Stack
-    let tempS = document.createElementNS(XUL, "textbox");
+    let tempS = document.createElement("input", { is: 'autocomplete-input' });
     if (!nextPart)
-      tempS.setAttribute("value", editingPart.getAttribute("url")
+      tempS.value = editingPart.getAttribute("url")
         .slice(((editingPart.previousSibling)?
-        editingPart.previousSibling.getAttribute("url"): "").length));
+        editingPart.previousSibling.getAttribute("url"): "").length);
     else {
       editingPart.setAttribute("lastArrowHidden", "false");
       if (!pref_useStyleSheet)
-        editingPart.lastChild.style.display = "-moz-box";
+        editingPart.lastChild.style.display = null;
       highlightPart(editingPart, false, false);
     }
     tempS.setAttribute("id", "UIEnhancer_URLBar_Editing_Stack_Text");
-    tempS.setAttribute("type", "autocomplete");
+    tempS.setAttribute("type", "search");
     tempS.setAttribute("autocompletesearch", "search-autocomplete");
     tempS.setAttribute("maxrows", 5);
-    tempS.style.display = "-moz-box";
+    tempS.style.display = "inline-flex";
     tempS.style.maxWidth = tempS.style.minWidth = Math.max((nextPart?
       100: (editingPart.firstChild.getBoundingClientRect().width +
       (editingPart == enhancedURLBar.firstChild? 75: 25))), 100) + "px";
     tempS.setAttribute("flex", 0);
+    tempS.style.flex = "none";
 
     // Adding the Arrow Stack
     let tempArrow = document.createElementNS(XUL, "label");
     tempArrow.setAttribute("id", "UIEnhancer_URLBar_Editing_Stack_Arrow");
-    tempArrow.style.display = "-moz-box";
+    tempArrow.style.display = null;
     tempArrow.setAttribute("flex", 0);
     createdStack.setAttribute("isHiddenArrow", false);
 
@@ -2108,9 +2109,10 @@ function changeUI(window) {
               {
                 let curNode = e.target.parentNode;
                 if (curNode.previousSibling == enhancedURLBar.firstChild
-                  && enhancedURLBar.firstChild.firstChild.getAttribute("value")
-                  .toLowerCase() == "about" && e.target.value.indexOf(":") < 0)
+                  && enhancedURLBar.firstChild.firstChild.getAttribute("value").toLowerCase() == "about")  {
+                  if(e.target.value.indexOf(":") < 0)
                     prevURL += ":";
+                }
                 else if ((curNode.hasAttribute("isSetting") && curNode.getAttribute("isSetting") == "false")
                   || (!curNode.hasAttribute("isSetting") && curNode.previousSibling.getAttribute("isSetting") == "false"))
                     prevURL += "/";
