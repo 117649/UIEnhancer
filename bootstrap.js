@@ -260,10 +260,8 @@ function changeUI(window) {
   let urlBarHeight = null;
   let origIdentity;
   let origILabel;
-  let origICountryLabel;
   let origInput;
   let identityLabel;
-  let identityCountryLabel;
   let enhancedURLBar;
   let setupEnhancedURLBarUI = function() {};
   let setOpacity = function() {};
@@ -322,13 +320,12 @@ function changeUI(window) {
   }
 
   // Get references to existing UI elements
-  origInput = gURLBar.mInputField;
-  origIdentity = $("identity-icon-labels");
+  origInput = gURLBar.inputField;
+  origIdentity = $("identity-icon-box");
   if (pref("enhanceURLBar")) {
     // Get references to existing UI elements
     if (pref("useIdentityEverytime")) {
       origILabel = $("identity-icon-label");
-      origICountryLabel = $("identity-icon-country-label");
       origIdentity.collapsed = false;
 
       identityLabel = document.createElementNS(XUL, "label");
@@ -336,21 +333,16 @@ function changeUI(window) {
       identityLabel.setAttribute("collapsed",false);
       identityLabel.setAttribute("flex", 1);
       identityLabel.setAttribute("style",origILabel.style);
+      identityLabel.classList = origILabel.classList;
       identityLabel.style.padding = "0px";
       identityLabel.style.margin = "0px";
+      identityLabel.style.paddingInlineStart = window.getComputedStyle(origILabel).paddingInlineStart;
+      identityLabel.style.alignItems = "center";
+      identityLabel.style.height = "100%";
 
-      identityCountryLabel = document.createElementNS(XUL, "label");
-      identityCountryLabel.setAttribute("id", "UIEnhancer_Identity_Country_Label");
-      identityCountryLabel.setAttribute("collapsed", false);
-      identityCountryLabel.setAttribute("flex", 1);
-      identityCountryLabel.setAttribute("style", origICountryLabel.style);
-      identityCountryLabel.style.padding = "0px";
-      identityCountryLabel.style.margin = "0px";
-
-      origIdentity.insertBefore(identityCountryLabel, origICountryLabel.nextSibling);
-      origIdentity.insertBefore(identityLabel, origICountryLabel.nextSibling);
-      origILabel.collapsed = true;
-      origICountryLabel.collapsed = true;
+      origIdentity.insertBefore(identityLabel, origILabel.nextSibling);
+      origILabel.hidden = true;
+      origIdentity.style.maxWidth = "unset";
     }
 
     setOpacity = function(opacity) {
@@ -374,14 +366,12 @@ function changeUI(window) {
     unload(function() {
       setOpacity(1);
       try {
-        origILabel.collapsed = false;
-        origICountryLabel.collapsed = false;
+        origILabel.hidden = false;
       } catch (ex) {}
       try {
-        origIdentity.removeChild($("identity-icon-country-label").nextSibling);
-        origIdentity.removeChild($("identity-icon-country-label").nextSibling);
+        identityLabel.remove();
       } catch(ex) {}
-      identityLabel = identityCountryLabel = origICountryLabel = origILabel = origIdentity = null;
+      identityLabel = origILabel = origIdentity = null;
     }, window);
 
     // Add stuff around the original urlbar input box
@@ -435,7 +425,7 @@ function changeUI(window) {
     // Listening for right click on identity box if Firefox 14 and below
     // or the user has enabled hidden pref for securedIdentityBox
     if (pref("useIdentityEverytime"))
-      listen(window, origIdentity, "click", function(e) {
+      listen(window, identityLabel, "click", function(e) {
         if (pref("identityBoxLeftClickChanged") && e.button <= 1
           && enhancedURLBar.firstChild.getAttribute("isDomain") == "true") {
             e.preventDefault();
@@ -1590,7 +1580,7 @@ function changeUI(window) {
     // opacity 1 means we are hiding the enhancedURLBar
     if (opacity == 1) {
       if (pref_useIdentityEverytime)
-        identityLabel.collapsed = identityCountryLabel.collapsed = true;
+        identityLabel.collapsed = true;
       enhancedURLBar.style.width = "0px";
       enhancedURLBar.style.display = "none";
       if (enhancedURLBar.nextSibling.hasAttribute("isHiddenArrow")) {
@@ -2000,7 +1990,7 @@ function changeUI(window) {
     if (editingPart == enhancedURLBar.firstChild) {
       if (pref_useIdentityEverytime)
         try {
-          identityCountryLabel.collapsed = identityLabel.collapsed = true;
+          identityLabel.collapsed = true;
         } catch (ex) {}
       editingPart.setAttribute("isDomain", "false");
       editingPart.firstChild.style.display = "-moz-box";
@@ -2085,7 +2075,7 @@ function changeUI(window) {
       if (e.target.parentNode == enhancedURLBar.firstChild) {
         if (pref_useIdentityEverytime)
           try {
-            identityCountryLabel.collapsed = identityLabel.collapsed = false;
+            identityLabel.collapsed = false;
           } catch (ex) {}
         partPointer = enhancedURLBar.firstChild.nextSibling;
       }
@@ -2493,7 +2483,7 @@ function changeUI(window) {
   let counter = 0;
   let initial = 0;
   let isSetting_updateURL = null;
-  let iCountry, iLabel = "";
+  let iLabel = "";
   let anchorTagIndex= null;
   let index = 0;
   let urlVal_updateURL;
@@ -2501,7 +2491,7 @@ function changeUI(window) {
   let prePart = "";
   unload(function() {
     initial = urlValue = urlArray_updateURL = counter = iLabel
-      = anchorTagIndex = isSetting_updateURL = iCountry
+      = anchorTagIndex = isSetting_updateURL
       = urlPostSetting = index = urlVal_updateURL = URLDisplayed = null;
   }, window);
 
@@ -2549,9 +2539,7 @@ function changeUI(window) {
       try {
         if (pref_useIdentityEverytime) {
           identityLabel.value = makeCapital(iLabel.replace("www.", ""));
-          identityCountryLabel.value = iCountry;
           origIdentity.collapsed = identityLabel.collapsed = false;
-          identityCountryLabel.collapsed = iCountry.length == 0;
         }
       } catch (ex) {}
       updateLook();
@@ -2675,19 +2663,15 @@ function changeUI(window) {
       urlArray_updateURL[index] = urlArray_updateURL[index].replace("=", " = ");
     }
     if (pref_useIdentityEverytime) {
-      iCountry = iLabel = "";
       if (!origILabel || origILabel.value.search(" ") < 0 || pref_useIdentityEverytime)
         iLabel = urlArray_updateURL[0];
       else
         iLabel = origILabel? origILabel.value: "";
-      iCountry = pref_useIdentityEverytime?"":(origICountryLabel? origICountryLabel.value: "");
 
       //trimming the iLabel to 50 characters
       iLabel = trimWord(iLabel, 54);
       identityLabel.value = makeCapital(iLabel.replace("www.", ""));
-      identityCountryLabel.value = iCountry;
       origIdentity.collapsed = identityLabel.collapsed = false;
-      identityCountryLabel.collapsed = (iCountry.length == 0);
     }
     // resetting the enhancedURLBar
     reset(0);
@@ -2728,7 +2712,7 @@ function changeUI(window) {
           refreshRelatedArray = true;
           if (!tabChanged && (pref("useIdentityEverytime")))
             origIdentity.collapsed = identityLabel.collapsed
-              = identityCountryLabel.collapsed = !pref("useIdentityEverytime");
+              = !pref("useIdentityEverytime");
           async(function() {
             if (!tabChanged)
               updateURL();
@@ -2744,7 +2728,7 @@ function changeUI(window) {
       listen(window, gBrowser.tabContainer, "TabSelect", function() {
         if (pref("useIdentityEverytime"))
           origIdentity.collapsed = identityLabel.collapsed
-            = identityCountryLabel.collapsed = !pref("useIdentityEverytime");
+            = !pref("useIdentityEverytime");
         tabChanged = true;
         try {
           if (showingHidden && enhancedURLBar.firstChild && (pref("useIdentityEverytime")))
@@ -2812,7 +2796,7 @@ function changeUI(window) {
         async(function() {
           if (!gURLBar.focused && newDocumentLoaded && (pref("useIdentityEverytime"))) {
             origIdentity.collapsed = identityLabel.collapsed
-              = identityCountryLabel.collapsed = !pref("useIdentityEverytime");
+              = !pref("useIdentityEverytime");
             titleChanged = true;
             updateURL();
             newDocumentLoaded = false;
