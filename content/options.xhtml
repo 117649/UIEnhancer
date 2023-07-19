@@ -79,7 +79,7 @@
       <hbox id="shortcutContainer">
         <label id="shortcutLabel" value="&combination.label;" accesskey="&combination.accesskey;"
           control="shortcutTextBox" style="padding: 5px 0px;"/>
-        <textbox id="shortcutTextBox" value="" width="125px" style="margin-right:5px;"
+        <html:input id="shortcutTextBox" value="" width="125px" style="margin-right:5px;"
           onkeyup="optionsWindow.notifyChange(this.value);" tooltiptext="&combination.tooltip;"/>
       </hbox>
     </vbox>
@@ -151,7 +151,7 @@
     <hbox>
       <label id="statusWidthLabel" value="&statusWidth.label;" tooltiptext="&statusWidth.tooltip;"
         accesskey="&statusWidth.accesskey;" control="statusWidthTextBox" style="padding: 5px 0px;"/>
-      <textbox id="statusWidthTextBox" preference="statusWidth" oncommand="optionsWindow.notifyChange();" flex="1"/>
+      <html:input id="statusWidthTextBox" preference="statusWidth" oncommand="optionsWindow.notifyChange();" flex="1"/>
     </hbox>
   </prefpane>
 </prefwindow>
