@@ -199,12 +199,12 @@ function changeUI(window) {
 
   // Get the current browser's URI even if loading
   function getURI() {
-    let channel = gBrowser.selectedBrowser.webNavigation.documentChannel;
-    if (channel != null)
-      return channel.originalURI;
-
+    let barURI;
+    try {
+      barURI = gURLBar._getURIFixupInfo(gURLBar.value).fixedURI;
+    } catch (error) {}
     // Just return the finished loading uri
-    return gBrowser.selectedBrowser.currentURI;
+    return barURI?.spec == "about:blank" ? null : barURI || gBrowser.selectedBrowser.originalURI || gBrowser.selectedBrowser.currentURI;
   }
 
   /*
