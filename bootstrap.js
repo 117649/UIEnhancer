@@ -3234,12 +3234,12 @@ function createHotKey(window) {
 }
 
 function disable(id) {
-  AddonManager.getAddonByID(id, function(addon) {
+  AddonManager.getAddonByID(id).then( function(addon) {
     addon.userDisabled = true;
   });
 }
 
-function startup(data, reason) { AddonManager.getAddonByID(data.id, function(addon) {
+function startup(data, reason) { AddonManager.getAddonByID(data.id).then( function(addon) {
   gAddon = addon;
   Cu.import("resource://services-sync/util.js");
   if (reason == 5 || reason == 7)
@@ -3311,7 +3311,7 @@ function startup(data, reason) { AddonManager.getAddonByID(data.id, function(add
 
     // check if S4E is there, if yes, update the variable
     try {
-      AddonManager.getAddonByID("status4evar@caligonstudios.com",setupFixForS4E);
+      AddonManager.getAddonByID("status4evar@caligonstudios.com").then(setupFixForS4E);
     } catch (ex) {}
     // Apply the changes in UI
     watchWindows(changeUI);
@@ -3540,7 +3540,7 @@ function shutdown(data, reason) {
   }
 }
 
-function install(data, reason) { AddonManager.getAddonByID(data.id, function(addon) {
+function install(data, reason) { AddonManager.getAddonByID(data.id).then( function(addon) {
   if (reason == 5 || reason == 7)
     firstRunAfterInstall = true;
   else
