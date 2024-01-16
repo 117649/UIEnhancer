@@ -6,14 +6,18 @@
 
 "use strict";
 
-const EXPORTED_SYMBOLS = ["Overlays"];
+this.EXPORTED_SYMBOLS = ["Overlays"];
 
-const Services = globalThis.Services || ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
-ChromeUtils.defineModuleGetter(
+ChromeUtils.defineESModuleGetters(
   this,
-  "setTimeout",
-  "resource://gre/modules/Timer.jsm"
+  {setTimeout:
+  "resource://gre/modules/Timer.sys.mjs"}
 );
+
+Components.utils.import("resource:///modules/CustomizableUI.jsm");
+
+const Globals = {};
+Globals.widgets = {};
 
 /**
  * The overlays class, providing support for loading overlays like they used to work. This class
@@ -89,8 +93,6 @@ class Overlays {
 
       console.debug(`Applying ${url} to ${this.location}`);
 
-      this._update(url, doc);
-
       // clean the document a bit
       const emptyNodes = doc.evaluate(
         "//text()[normalize-space(.) = '']",
@@ -163,12 +165,6 @@ class Overlays {
       forwardReferences.unshift(...t_forwardReferences);
     }
 
-    // We've resolved all the forward references we can, we can now go ahead and load the scripts
-    this.deferredLoad = [];
-    for (const script of this.unloadedScripts) {
-      this.deferredLoad.push(...this.loadScript(script));
-    }
-
     const ids = xulStore.getIDsEnumerator(this.location);
     while (ids.hasMore()) {
       this.persistedIDs.add(ids.getNext());
@@ -224,8 +220,14 @@ class Overlays {
       }
     }
 
+    // We've resolved all the forward references we can, we can now go ahead and load the scripts
+    this.deferredLoad = [];
+    for (const script of this.unloadedScripts) {
+      this.deferredLoad.push(...this.loadScript(script));
+    }
+
     if (this.document.readyState == "complete") {
-      lazy.setTimeout(() => {
+      setTimeout(() => {
         this._finish();
 
         // Now execute load handlers since we are done loading scripts
@@ -326,8 +328,46 @@ class Overlays {
         this._insertElement(this.document.documentElement, node);
         return true;
       } else if (node.localName == "toolbarpalette") {
-        console.error("toolbarpalette is unsupported type", node.id);
-        return false;
+        const toolboxes = this.window.document.querySelectorAll('toolbox');
+        for (const toolbox of toolboxes) {
+          let palette = toolbox.palette;
+
+          if (palette &&
+					this.window.gCustomizeMode._stowedPalette &&
+					this.window.gCustomizeMode._stowedPalette.id == node.id &&
+					palette == this.window.gCustomizeMode.visiblePalette) {
+            palette = this.window.gCustomizeMode._stowedPalette;
+          }
+
+          if (palette && (palette.id == node.id || (node.id == "BrowserToolbarPalette" && toolbox == this.window.gNavToolbox))) {
+            for (let button of node.childNodes) {
+              if (button.id) {
+                const existButton = this.window.document.getElementById(button.id);
+
+                // If it's a placeholder created by us to deal with CustomizableUI, just use it.
+                if (this.trueAttribute(existButton, 'CUI_placeholder')) {
+                  this.removeAttribute(existButton, 'CUI_placeholder');
+                  existButton.collapsed = false;
+                  this.appendButton(this.window, palette, existButton);
+
+                // we shouldn't be changing widgets, or adding with same id as other nodes
+                } else if (!existButton) {
+                  // Save a copy of the widget node in the sandbox,
+                  // so CUI can use it when opening a new window without having to wait for the overlay.
+                  if (!Globals.widgets[button.id]) {
+                    Globals.widgets[button.id] = button;
+                  }
+
+                  // add the button if not found either in a toolbar or the palette
+                  button = this.window.document.importNode(button, true);
+                  this.appendButton(this.window, palette, button);
+                }
+              }
+            }
+            break;
+          }
+        }
+        return true;
       } else if (!target) {
         if (node.hasAttribute("insertafter") || node.hasAttribute("insertbefore")) {
           this._insertElement(this.document.documentElement, node);
@@ -465,7 +505,7 @@ class Overlays {
    * @param {String} srcUrl          The URL to load
    * @return {Promise<XMLDocument>}  Returns a promise that is resolved with the XML document.
    */
-  fetchOverlay(srcUrl) {
+   fetchOverlay(srcUrl) {
     if (!srcUrl.startsWith("chrome://") && !srcUrl.startsWith("resource://")) {
       throw new Error(
         "May only load overlays from chrome:// or resource:// uris"
@@ -540,7 +580,7 @@ class Overlays {
       try {
         Services.scriptloader.loadSubScript(url, this.window);
       } catch (ex) {
-        console.error(ex);
+        Cu.reportError(ex);
       }
     } else if (node.textContent) {
       console.debug(`Loading eval'd script into ${this.window.location}`);
@@ -551,7 +591,7 @@ class Overlays {
         // loadSubScript will have to do.
         Services.scriptloader.loadSubScript(dataURL, this.window);
       } catch (ex) {
-        console.error(ex);
+        Cu.reportError(ex);
       }
     }
 
@@ -575,5 +615,190 @@ class Overlays {
 
     const winUtils = this.window.windowUtils;
     winUtils.loadSheetUsingURIString(url, winUtils.AUTHOR_SHEET);
+  }
+
+  trueAttribute(obj, attr) {
+    if (!obj || !obj.getAttribute) {
+      return false;
+    }
+
+    return (obj.getAttribute(attr) == 'true');
+  }
+
+  removeAttribute(obj, attr) {
+    if (!obj || !obj.removeAttribute) {
+      return;
+    }
+    obj.removeAttribute(attr);
+  }
+
+  appendButton(aWindow, palette, node) {
+    if (!node.parentNode) {
+      palette.appendChild(node);
+    }
+    const id = node.id;
+
+    const widget = CustomizableUI.getWidget(id);
+    if (!widget || widget.provider != CustomizableUI.PROVIDER_API) {
+      try {
+        CustomizableUI.createWidget(this.getWidgetData(node, palette));
+      } catch (ex) {
+        Cu.reportError(ex);
+      }
+    } else {
+      try {
+        CustomizableUI.ensureWidgetPlacedInWindow(id, aWindow);
+      } catch (ex) {
+        Cu.reportError(ex);
+      }
+    }
+
+    return node;
+  }
+
+  getWidgetData(node, palette) {
+    // let's default this one
+    const data = { removable: true };
+
+    if (node.attributes) {
+      for (const attr of node.attributes) {
+        if (attr.value == 'true') {
+          data[attr.name] = true;
+        } else if (attr.value == 'false') {
+          data[attr.name] = false;
+        } else {
+          data[attr.name] = attr.value;
+        }
+      }
+    }
+
+    const WT = ['button', 'view', 'button-and-view', 'custom'];
+
+    if (!(data.type in WT)) data.type = 'custom';
+    else {
+      // here we should have code to handle the <toolbarbutton> in overlay that use widget types making widge out of them
+      // by convert 'on*' attributeis to function.
+      for (const key of Object.keys(data).filter(t => t.startsWith('on'))) {
+        const f = new Function("args", data[key]);
+        data[key] = f;
+      }
+    }
+
+    // createWidget() defaults the removable state to true as of bug 947987
+    if (!data.removable && !data.defaultArea) {
+      data.defaultArea = (node.parentNode) ? node.parentNode.id : palette.id;
+    }
+
+    if (data.type == 'custom') {
+      data.palette = palette;
+
+      data.onBuild = function (aDocument, aDestroy) {
+        // Find the node in the DOM tree
+        node = aDocument.getElementById(this.id);
+
+        // If it doesn't exist, find it in a palette.
+        // We make sure the button is in either place at all times.
+        if (!node) {
+          const toolboxes = aDocument.querySelectorAll('toolbox');
+          for (const toolbox of toolboxes) {
+            let tbPalette = toolbox.palette;
+            if (tbPalette) {
+              if (tbPalette == aDocument.defaultView.gCustomizeMode.visiblePalette) {
+                tbPalette = aDocument.defaultView.gCustomizeMode._stowedPalette;
+              }
+              const child = [...tbPalette.childNodes].find(item => item.id == this.id, this);
+              if (child) {
+                node = child;
+                break;
+              }
+            }
+          }
+        }
+
+        // If it doesn't exist there either, CustomizableUI is using the widget information before it has been overlayed (i.e. opening a new window).
+        // We get a placeholder for it, then we'll replace it later when the window overlays.
+        if (!node && !aDestroy) {
+          node = aDocument.importNode(Globals.widgets[this.id], true);
+          node?.setAttribute('CUI_placeholder', 'true');
+          node.collapsed = true;
+        }
+
+        return node;
+      };
+
+      const self = this;
+      // unregisterArea()'ing the toolbar can nuke the nodes, we need to make sure ours are moved to the palette
+      data.onWidgetAfterDOMChange = function (aNode) {
+        if (aNode.id == this.id &&
+          !aNode.parentNode &&
+          !self.trueAttribute(aNode.ownerDocument.documentElement, 'customizing') && // it always ends up in the palette in this case
+          this.palette) {
+          this.palette.appendChild(aNode);
+        }
+      };
+
+      data.onWidgetDestroyed = function (aId) {
+        if (aId == this.id) {
+          const browserEnumerator = Services.wm.getEnumerator('navigator:browser');
+          const handler = win => {
+            const widget = data.onBuild(win.document, true);
+            if (widget) {
+              widget.remove();
+            }
+          };
+          while (browserEnumerator.hasMoreElements()) {
+            const window = browserEnumerator.getNext();
+
+            if (!window || !window.addEventListener) {
+              continue;
+            }
+
+            if (window.document.readyState == "complete") {
+              try {
+                handler(window);
+              } catch (ex) {
+                Cu.reportError(ex);
+              }
+              continue;
+            }
+
+            const runOnce = function (event) {
+              try {
+                window.removeEventListener("load", runOnce, false);
+              } catch (ex) {
+                if (ex.message == "can't access dead object") {
+                  const scriptError = Cc["@mozilla.org/scripterror;1"].createInstance(Ci.nsIScriptError);
+                  scriptError.init(
+                    "Can't access dead object. This shouldn't cause any problems.",
+                    ex.sourceName || ex.fileName || null,
+                    ex.sourceLine || null,
+                    ex.lineNumber || null,
+                    ex.columnNumber || null,
+                    scriptError.warningFlag,
+                    "XPConnect JavaScript"
+                  );
+                  Services.console.logMessage(scriptError);
+                }
+                Cu.reportError(ex);
+              } // Prevents some can't access dead object errors
+              if (event !== undefined) {
+                try {
+                  handler(window);
+                } catch (ex) {
+                  Cu.reportError(ex);
+                }
+              }
+            };
+
+            window.addEventListener("load", runOnce, false);
+          }
+          CustomizableUI.removeListener(this);
+        }
+      };
+
+      CustomizableUI.addListener(data);
+    }
+
+    return data;
   }
 }
